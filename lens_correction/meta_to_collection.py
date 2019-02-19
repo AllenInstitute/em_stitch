@@ -170,18 +170,8 @@ class MetaToCollection(object):
                             }
                         })
 
-        output = {
-            'collection': samples,
-            "calibration": {
-                "nm_per_pix": float(calibration["nm_per_pix"]),
-                "angle": float(calibration["angle"])
-            },
-            'tilespecs': tilespecs
-        }
-        output = samples
-
         with open(args.output_file, 'w') as f:
-            json.dump(output, f, indent=2)
+            json.dump(samples, f, indent=2)
 
         return
 
