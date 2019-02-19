@@ -1,6 +1,6 @@
 # em_lens_correction
 
-note: the maps for opencv.remap are not written to disk currently, they are just part of the `LensCorrectionSolver` object.
+note: the maps for opencv.remap are not written to disk currently, they are just part of the `LensCorrectionSolver` object. 
 ```
         self.map1, self.map2 = maps_from_tform(
                 renderapi.transform.ThinPlateSplineTransform(
