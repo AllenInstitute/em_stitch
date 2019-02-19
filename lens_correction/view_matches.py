@@ -19,7 +19,7 @@ def plot_ims_and_coords(pim, qim, p, q, fignum=1):
     a[0].imshow(pim, cmap='gray')
     a[1].imshow(qim, cmap='gray')
     a[0].scatter(p[:, 0], p[:, 1], marker='x', color='r')
-    a[1].scatter(p[:, 0], p[:, 1], marker='x', color='r')
+    a[1].scatter(q[:, 0], q[:, 1], marker='x', color='r')
     return
 
 
