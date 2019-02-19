@@ -75,6 +75,7 @@ class MetaToCollection(object):
         '''get the names of the meta and montage files'''
         for name in glob.glob(os.path.join(rootdir, r"_meta*.*")):
             meta = name
+        montage = None
         for name in glob.glob(os.path.join(rootdir, r"_montage*.*")):
             montage = name
         return (meta, montage)
@@ -142,6 +143,10 @@ class MetaToCollection(object):
             if 'matcher' in tile:
                 for match in tile['matcher']:
                     position = match['position']
+                    match_quality = match['match_quality']
+                    if match_quality == -1:
+                        # -1 is a flag indicating no matches are possible for this tile edge
+                        continue
                     neighbor = self.tile_from_tile(args, tile, position)
                     if neighbor:
                         # print(position, tile['img_meta']['raster_pos'], neighbor['img_meta']['raster_pos'])
@@ -165,14 +170,14 @@ class MetaToCollection(object):
                             }
                         })
 
-        # output = {
-        #     'collection': samples,
-        #     "calibration": {
-        #         "nm_per_pix": float(calibration["nm_per_pix"]),
-        #         "angle": float(calibration["angle"])
-        #     },
-        #     'tilespecs': tilespecs
-        # }
+        output = {
+            'collection': samples,
+            "calibration": {
+                "nm_per_pix": float(calibration["nm_per_pix"]),
+                "angle": float(calibration["angle"])
+            },
+            'tilespecs': tilespecs
+        }
         output = samples
 
         with open(args.output_file, 'w') as f:
@@ -190,7 +195,7 @@ def main(args):
         help='the directory to process.',
         metavar="",
         nargs='?',
-        default=r'H:\data\lens_correction5\000000\0')
+        default=r'D:\data\lens_correction8\000000\0')
 
     parent_parser.add_argument(
         '-o',
