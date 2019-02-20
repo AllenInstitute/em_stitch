@@ -122,19 +122,23 @@ class MetaToCollection(object):
 
         qGroupId = pGroupId = session_id
 
+
+
+
         # for all tiles
         for index, tile in enumerate(data):
-            pId = tile["img_path"]
+
+            # tile == 'q' tile, where the template search is taking place
+
+            qId = tile["img_path"]
             # hmm, munge the filenames?
-            pId = pId.replace(".tif", "")
+            qId = qId.replace(".tif", "")
             tilespec = {
-                'tileId': pId,
+                'tileId': qId,
                 'xstage': float(tile["img_meta"]['stage_pos'][0]),
                 'ystage': float(tile["img_meta"]['stage_pos'][1])
             }
             tilespecs.append(tilespec)
-            # rp = tile['img_meta']['raster_pos']
-            # col, row = rp
 
             p = [[], []]
             q = [[], []]
@@ -148,14 +152,15 @@ class MetaToCollection(object):
                         # -1 is a flag indicating no matches are possible for this tile edge
                         continue
                     neighbor = self.tile_from_tile(args, tile, position)
+                    # neighbor == 'p' tile, which contains the original template
                     if neighbor:
                         # print(position, tile['img_meta']['raster_pos'], neighbor['img_meta']['raster_pos'])
                         p = [match["pX"], match["pY"]]
                         q = [match["qX"], match["qY"]]
                         w = [1] * len(match["pX"])
                         # hmm, munge the filenames?
-                        qId = neighbor["img_path"]
-                        qId = qId.replace(".tif", "")
+                        pId = neighbor["img_path"]
+                        pId = pId.replace(".tif", "")
 
                         samples.append({
                             'pId': pId,
@@ -166,7 +171,8 @@ class MetaToCollection(object):
                                 'p': p,
                                 'q': q,
                                 'w': w,
-                                'match_count': len(w)
+                                'match_count': len(w),
+                                #'position': position
                             }
                         })
 
@@ -185,7 +191,7 @@ def main(args):
         help='the directory to process.',
         metavar="",
         nargs='?',
-        default=r'D:\data\lens_correction8\000000\0')
+        default=r'D:\data\lens_correction10\000000\0')
 
     parent_parser.add_argument(
         '-o',
