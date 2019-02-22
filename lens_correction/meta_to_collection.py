@@ -49,7 +49,12 @@ class MetaToCollection(object):
                 return None
         elif direction == Edge.TOP:
             if row > 0:
-                return args.raster_pos_lookup[str(col) + "_" + str(row - 1)]
+                try:
+                    # argh!
+                    argh = args.raster_pos_lookup[str(col) + "_" + str(row - 1)]
+                    return argh
+                except:
+                    return None
             else:
                 return None
 
@@ -191,7 +196,8 @@ def main(args):
         help='the directory to process.',
         metavar="",
         nargs='?',
-        default=r'D:\data\lens_correction10\000000\0')
+        default="/allen/programs/celltypes/workgroups/em-connectomics/danielk/lcdata/lens_correction16/000000/0")
+        # default=r'D:\data\lens_correction10\000000\0')
 
     parent_parser.add_argument(
         '-o',
