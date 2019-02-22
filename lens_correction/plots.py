@@ -99,15 +99,17 @@ class LensCorrectionPlots():
 
         for m in orig:
             discarded = []
-            uind = np.argwhere((ups == m['pId']) & (uqs == m['qId'])).flatten()[0]
-            um = used[uind]
-            up = np.array(um['matches']['p']).transpose()
-            for op in np.array(m['matches']['p']).transpose():
-                tf = (up == op)
-                if np.any(tf[:, 0] & tf[:, 1]):
-                    discarded.append(0)
-                else:
-                    discarded.append(1)
+            uind = np.argwhere((ups == m['pId']) & (uqs == m['qId'])).flatten()
+            if uind.size > 0:
+                uind = uind[0]
+                um = used[uind]
+                up = np.array(um['matches']['p']).transpose()
+                for op in np.array(m['matches']['p']).transpose():
+                    tf = (up == op)
+                    if np.any(tf[:, 0] & tf[:, 1]):
+                        discarded.append(0)
+                    else:
+                        discarded.append(1)
             m['matches']['discarded'] = list(discarded)
         return orig
 

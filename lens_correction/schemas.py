@@ -136,3 +136,17 @@ class LensCorrectionSchema(ArgSchema):
         default=False,
         description="output pdf plots (was slow on windows)")
 
+
+class MetaToMontageAndCollectionSchema(ArgSchema):
+    data_dir = InputDir(
+        required=True,
+        description="directory containing metafile, images, and matches")
+    output_dir = OutputDir(
+        required=False,
+        description="directory for output files")
+    ref_transform = InputFile(
+        required=False,
+        missing=None,
+        default=None,
+        description="transform json")
+

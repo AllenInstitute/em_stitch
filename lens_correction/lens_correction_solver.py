@@ -19,12 +19,11 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 example = {
-        #"data_dir": "/allen/programs/celltypes/workgroups/em-connectomics/jayb/lens_correction5/20190215123854_reference/0",
-        "data_dir": "/allen/programs/celltypes/workgroups/em-connectomics/jayb/lens_correction5/20190215123623_reference/0",
-        "output_dir": "/allen/programs/celltypes/workgroups/em-connectomics/danielk/em_lens_correction/tmp",
+        "data_dir": "/allen/programs/celltypes/workgroups/em-connectomics/danielk/lcdata/lens_correction16/20190221123543_reference/0",
+        "output_dir": "/allen/programs/celltypes/workgroups/em-connectomics/danielk/lcdata/lens_correction16/20190221123543_reference/0",
         "mask_file": None,
         "ransac_thresh": 5,
-        "nvertex": 300,
+        "nvertex": 1000,
         "regularization": {
             "default_lambda": 1.0,
             "lens_lambda": 1.0,
@@ -61,8 +60,8 @@ def tilespec_input_from_metafile(
 
     with open(template_file, 'r') as f:
         jtemp = json.load(f)
-    result['z'] = int(
-            jtemp['tilespecs'][0]['tileId'].split('.')[-2])
+
+    result['z'] = np.random.randint(0, 1000)
     result['minimum_intensity'] = 0
     bpp = jmeta[0]['metadata']['camera_info']['camera_bpp']
     result['maximum_intensity'] = int(np.power(2, bpp) - 1)
