@@ -7,7 +7,8 @@ https://github.com/AllenInstitute/render-modules
 
 It is meant to be independent of render-modules and a running render server.
 
-Jay:
+### viz for Jay:
+
 you'll likely need some render guru to help you if you want to visualize a montage... but, here you go:
 
 the following makes a collection out of the montage metadata file and also makes an apply lens correction tilespec json
@@ -42,10 +43,6 @@ this worked well for me:
 ```
 (em_lens_correction) danielk@ibs-danielk-ux1:/allen/programs/celltypes/workgroups/em-connectomics/danielk/em-lens-correction$ python -m EMaligner.EMaligner --input_json lens_correction/montage_test_input.json --output_mode stack --regularization.default_lambda 1e4 --regularization.translation_factor 1e-10
 ```
-
-If things are the way they are as committed here, this will give you this:
-
-http://em-131db:8001/#!{'layers':{'first_test_solved':{'type':'image'_'source':'render://http://em-131fs:8987/danielk/montage_test/first_test_solved'}}_'navigation':{'pose':{'position':{'voxelSize':[1_1_1]_'voxelCoordinates':[49524.8046875_35542.5390625_150000.5]}}_'zoomFactor':1.8221188003905036}_'showAxisLines':false}
 
 render basics:
 the server we're talking to. put this in a browser:
