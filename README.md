@@ -46,9 +46,11 @@ this worked well for me:
 
 render basics:
 the server we're talking to. put this in a browser:
+
 `em-131fs:8987`
 
 before you do anything else, put this in the NdViz Host box, deleting what's there:
+
 `em-131db:8001`
 
 you can use the drop downs and navigate to what we just wrote:
@@ -65,3 +67,6 @@ http://em-131db:8001/#!{'layers':{'first_test_solved':{'type':'image'_'source':'
 
 this is the solved montage from lenscorrection16.
 
+and, finally, if you do this more than once and the setionId/groupId/z for the tilespecs and collections are overlapping, you might be adding tiles to a z, and your solve might be trying to solve multiple things at once, which you might not intend.
+
+you can get around this by just renaming the collection and stack in upload_montage.py you'll then also have to modify the input json to the solver: input stack name, collection name, output stack name, z ... these things are important.
