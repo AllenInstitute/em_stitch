@@ -1,7 +1,0 @@
-argschema
-render-python>=2.2.0
-numpy
-scipy
-opencv-python
-triangle
-scikit-learn
