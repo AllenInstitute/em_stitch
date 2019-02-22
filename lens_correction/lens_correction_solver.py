@@ -61,8 +61,11 @@ def tilespec_input_from_metafile(
 
     with open(template_file, 'r') as f:
         jtemp = json.load(f)
-    result['z'] = int(
+    try:
+        result['z'] = int(
             jtemp['tilespecs'][0]['tileId'].split('.')[-2])
+    except:
+        result['z'] = 0 # jayb
     result['minimum_intensity'] = 0
     bpp = jmeta[0]['metadata']['camera_info']['camera_bpp']
     result['maximum_intensity'] = int(np.power(2, bpp) - 1)
