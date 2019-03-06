@@ -251,7 +251,7 @@ def create_thinplatespline_tf(
     transform = renderapi.transform.ThinPlateSplineTransform()
     transform.estimate(mesh.points, dst, computeAffine=compute_affine)
     npts0 = transform.srcPts.shape[1]
-    transform = transform.adaptive_mesh_estimate()
+    transform = transform.adaptive_mesh_estimate(max_iter=1000)
     npts1 = transform.srcPts.shape[1]
 
     logger.info("adaptive_mesh_estimate reduced control points from %d to %d" % (npts0, npts1))
