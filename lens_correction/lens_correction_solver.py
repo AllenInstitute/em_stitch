@@ -19,10 +19,10 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 example = {
-        "data_dir": "/allen/programs/celltypes/workgroups/em-connectomics/danielk/lcdata/lens_correction16/20190221123543_reference/0",
-        "output_dir": "/allen/programs/celltypes/workgroups/em-connectomics/danielk/lcdata/lens_correction16/20190221123543_reference/0",
+        "data_dir": "/data/em-131fs3/lctest/T4_5/20190306133708_reference/0",
+        "output_dir": "/data/em-131fs3/lctest/T4_5/20190306133708_reference/0",
         "mask_file": None,
-        "ransac_thresh": 5,
+        "ransac_thresh": 10,
         "nvertex": 1000,
         "regularization": {
             "default_lambda": 1.0,
