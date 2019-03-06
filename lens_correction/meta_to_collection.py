@@ -30,29 +30,33 @@ class MetaToCollection(object):
     ''' Converts a raw TEMCA metafile into a collection json file which the render stack can consume.
     '''
 
-
     def tile_from_raster_pos(self, args, col, row, direction=None):
         ''' returns a neighboring tile given a col, row.
             direction is either None (return this tile), LEFT, RIGHT, or TOP
+            If the tile has no neighbor in the given direction, None is returned
         '''
         if direction is None:
             return args.raster_pos_lookup[str(col) + "_" + str(row)]
         elif direction == Edge.LEFT:
             if col > 0:
-                return args.raster_pos_lookup[str(col - 1) + "_" + str(row)]
+                try:
+                    return args.raster_pos_lookup[str(col - 1) + "_" + str(row)]
+                except:
+                    return None
             else:
                 return None
         elif direction == Edge.RIGHT:
             if col < args.tcols:
-                return args.raster_pos_lookup[str(col + 1) + "_" + str(row)]
+                try:
+                    return args.raster_pos_lookup[str(col + 1) + "_" + str(row)]
+                except:
+                    return None
             else:
                 return None
         elif direction == Edge.TOP:
             if row > 0:
                 try:
-                    # argh!
-                    argh = args.raster_pos_lookup[str(col) + "_" + str(row - 1)]
-                    return argh
+                    return args.raster_pos_lookup[str(col) + "_" + str(row - 1)]
                 except:
                     return None
             else:
@@ -126,9 +130,6 @@ class MetaToCollection(object):
         tilespecs = []
 
         qGroupId = pGroupId = session_id
-
-
-
 
         # for all tiles
         for index, tile in enumerate(data):
