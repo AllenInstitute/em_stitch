@@ -2,7 +2,7 @@
   "transformation": "affine",
   "pointmatch": {
     "mongo_userName": "",
-    "name": "first_test_montage",
+    "name": "T4_6",
     "log_level": "ERROR",
     "db_interface": "render",
     "client_scripts": "/allen/aibs/pipeline/image_processing/volume_assembly/render-jars/production/scripts",
@@ -19,7 +19,7 @@
   "profile_data_load": false,
   "input_stack": {
     "mongo_userName": "",
-    "name": "first_test_apply_lens",
+    "name": "T4_6",
     "log_level": "ERROR",
     "db_interface": "render",
     "client_scripts": "/allen/aibs/pipeline/image_processing/volume_assembly/render-jars/production/scripts",
@@ -34,7 +34,7 @@
     "collection_type": "stack",
     "port": 8987 
   },
-  "first_section": 150000,
+  "first_section": 101844,
   "ingest_from_file": "",
   "hdf5_options": {
     "chunks_per_file": -1,
@@ -47,16 +47,16 @@
   "output_mode": "stack",
   "log_level": "INFO",
   "regularization": {
-    "default_lambda": 1e5,
+    "default_lambda": 5e5,
     "log_level": "ERROR",
-    "translation_factor": 1e-9,
+    "translation_factor": 1e-10,
     "freeze_first_tile": false,
     "poly_factors": [1e-5, 1.0, 1000000]
   },
   "poly_order": 2,
   "output_stack": {
     "mongo_userName": "",
-    "name": "first_test_solved",
+    "name": "T4_6_solved",
     "log_level": "ERROR",
     "db_interface": "render",
     "client_scripts": "/allen/aibs/pipeline/image_processing/volume_assembly/render-jars/production/scripts",
@@ -85,5 +85,5 @@
     "choose_random": false
   },
   "close_stack": true,
-  "last_section": 150000
+  "last_section": 101844
 }

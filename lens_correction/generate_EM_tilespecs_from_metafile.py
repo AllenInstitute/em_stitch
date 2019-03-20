@@ -31,13 +31,6 @@ class GenerateEMTileSpecsModule(ArgSchemaParser):
 
     def tileId_from_basename(self, fname):
         return os.path.splitext(os.path.basename(fname))[0]
-        #return '{bname}.{z}'.format(
-        #    bname=os.path.splitext(os.path.basename(fname))[0],
-        #    z=str(float(self.args['z'])))
-
-    # @staticmethod
-    # def sectionId_from_z(z):
-    #     return str(float(z))
 
     def ts_from_imgdata(self, imgdata, imgdir, x, y,
                         minint=0, maxint=255, maskUrl=None,
@@ -118,6 +111,7 @@ class GenerateEMTileSpecsModule(ArgSchemaParser):
     def tilespecs(self):
         tjs = [t.to_dict() for t in self.render_tspecs]
         return tjs
+
 
 if __name__ == '__main__':
     gmod = GenerateEMTileSpecsModule()

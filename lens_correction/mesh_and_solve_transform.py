@@ -14,6 +14,7 @@ import cv2
 from six.moves import urllib
 from argschema import ArgSchemaParser
 from .schemas import MeshLensCorrectionSchema
+from .utils import remove_weighted_matches
 import logging
 
 # this is a modification of https://github.com/
@@ -44,7 +45,7 @@ def condense_coords(matches):
     return coords
 
 
-def even_distribution(coords, tile_width, tile_height, n):
+def smooth_density(coords, tile_width, tile_height, n):
     # n: area divided into nxn
     min_count = np.Inf
     for i in range(n):
@@ -247,14 +248,15 @@ def create_thinplatespline_tf(
         # average affine result
         dst = common_transform.tform(dst)
 
-
     transform = renderapi.transform.ThinPlateSplineTransform()
     transform.estimate(mesh.points, dst, computeAffine=compute_affine)
     npts0 = transform.srcPts.shape[1]
     transform = transform.adaptive_mesh_estimate(max_iter=1000)
     npts1 = transform.srcPts.shape[1]
 
-    logger.info("adaptive_mesh_estimate reduced control points from %d to %d" % (npts0, npts1))
+    logger.info(
+            "adaptive_mesh_estimate reduced control points from %d to %d" %
+            (npts0, npts1))
 
     transform.transformId = (
             datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
@@ -323,7 +325,7 @@ def report_solution(errx, erry, transforms, criteria):
                 d += calc + ','
                 k = xy + '_' + val + '_' + calc
                 v += '%8.2f' % jresult[k]
-            message += d + v 
+            message += d + v
 
     return translation, jresult, message
 
@@ -336,8 +338,6 @@ def create_x0(nrows, tilespecs):
     x0[0][0:ntiles] = np.zeros(ntiles)
     x0[1][0:ntiles] = np.zeros(ntiles)
     for i in range(ntiles):
-        #x0[0][i] = tilespecs[i].bbox_transformed()[:, 0].min()
-        #x0[1][i] = tilespecs[i].bbox_transformed()[:, 1].min()
         x0[0][i] = tilespecs[i].tforms[0].B0
         x0[1][i] = tilespecs[i].tforms[0].B1
     return x0
@@ -392,14 +392,13 @@ def create_A(matches, tilespecs, mesh):
         mstep = np.arange(npoint_pairs) * nnz_per_row + offset
 
         data[mstep + 0] = 1.0
-        data[mstep + 1] = -1.0 
+        data[mstep + 1] = -1.0
         data[mstep + 2] = pbary[0][:, 0]
         data[mstep + 3] = pbary[0][:, 1]
         data[mstep + 4] = pbary[0][:, 2]
         data[mstep + 5] = -qbary[0][:, 0]
         data[mstep + 6] = -qbary[0][:, 1]
         data[mstep + 7] = -qbary[0][:, 2]
-
 
         indices[mstep + 0] = pindex
         indices[mstep + 1] = qindex
@@ -412,9 +411,9 @@ def create_A(matches, tilespecs, mesh):
         indices[mstep + 5] = (lens_dof_start +
                               mesh.simplices[qbary[1][:]][:, 0])
         indices[mstep + 6] = (lens_dof_start +
-                               mesh.simplices[qbary[1][:]][:, 1])
+                              mesh.simplices[qbary[1][:]][:, 1])
         indices[mstep + 7] = (lens_dof_start +
-                               mesh.simplices[qbary[1][:]][:, 2])
+                              mesh.simplices[qbary[1][:]][:, 2])
 
         offset += npoint_pairs*nnz_per_row
 
@@ -470,21 +469,27 @@ class MeshAndSolveTransform(ArgSchemaParser):
         with open(self.args['match_file'], 'r') as f:
             self.matches = json.load(f)
 
+        remove_weighted_matches(self.matches, weight=0.0)
+
         self.tile_width = self.tilespecs[0].width
         self.tile_height = self.tilespecs[0].height
         maskUrl = self.tilespecs[0].ip[0].maskUrl
 
         # condense coordinates
         self.coords = condense_coords(self.matches)
-        self.coords = even_distribution(
+        nc0 = self.coords.shape[0]
+        self.coords = smooth_density(
             self.coords,
             self.tile_width,
             self.tile_height,
             10)
-
+        nc1 = self.coords.shape[0]
+        self.logger.info(
+                "\n  smoothing point density reduced points from %d to %d" %
+                (nc0, nc1))
         if self.coords.shape[0] == 0:
             raise MeshLensCorrectionException(
-                    "no point matches left after evening distribution, \
+                    "no point matches left after smoothing density, \
                      probably some sparse areas of matching")
 
         # create PSLG
@@ -510,7 +515,9 @@ class MeshAndSolveTransform(ArgSchemaParser):
         nend = self.mesh.points.shape[0]
 
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.info("\n  aimed for %d mesh points, got %d" % (self.args['nvertex'], nend))
+        self.logger.info(
+                "\n  aimed for %d mesh points, got %d" %
+                (self.args['nvertex'], nend))
 
         if self.mesh.points.shape[0] < 0.5*self.args['nvertex']:
             raise MeshLensCorrectionException(
@@ -568,7 +575,6 @@ class MeshAndSolveTransform(ArgSchemaParser):
                     "Solve not good: %s" % self.solve_message)
 
         self.logger.debug(self.solve_message)
-
 
         jresult_path = os.path.join(
                 self.args['output_dir'],
