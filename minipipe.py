@@ -40,6 +40,10 @@ refdir = "/data/em-131fs3/lctest/T4_07/20190315150001_reference/0"
 monbase = "/data/em-131fs3/lctest/T4_07"
 zr = [1935]
 
+refdir = "/data/em-131fs3/lctest/T4_07/20190315142205_reference/0"
+monbase = "/data/em-131fs3/lctest/T4_07"
+zr = [1931]
+
 #refdir = "/data/em-131fs3/lctest/T4_05/20190313171227_reference/0"
 #monbase = "/data/em-131fs3/lctest/T4_05"
 #zr = range(1894, 1903)

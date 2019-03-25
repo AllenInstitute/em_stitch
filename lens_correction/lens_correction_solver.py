@@ -17,7 +17,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 example = {
         "data_dir": "/data/em-131fs3/lctest/T4_07/20190315142205_reference/0",
-        "output_dir": "/allen/programs/celltypes/workgroups/em-connectomics/danielk/em-lens-correction/tmp_output/20190313145617_reference",
+        "output_dir": "/data/em-131fs3/lctest/T4_07/20190315142205_reference/0",
         "mask_file": None,
         "ransac_thresh": 10,
         "nvertex": 1000,
