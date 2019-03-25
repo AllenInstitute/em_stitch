@@ -1,0 +1,13 @@
+{
+	"render":{
+            "host": "em-131fs",
+            "port": 8987,
+            "owner": "danielk",
+            "project": "montage_test",
+            "client_scripts": "/allen/aibs/pipeline/image_processing/volume_assembly/render-jars/production/scripts"
+        },
+        "output_dir": "/data/em-131fs3/lctest/T4_13/001844/0",
+        "collection": "data_em131fs3_lctest_T4_13_001844_0",
+        "stack": "data_em131fs3_lctest_T4_13_001844_0_solved",
+        "sectionId": "T4_13",
+        "z": 101844}

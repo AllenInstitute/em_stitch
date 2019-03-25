@@ -1,25 +1,137 @@
 import renderapi
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import sys
 import json
 import numpy as np
 import glob
 import os
 import logging
+import re
 import warnings
+import datetime
+from .utils import estimate_stage_affine, src_from_xy
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-def estimate_stage_affine(t0, t1):
-    src = np.array([t.tforms[0].translation for t in t0])
-    dst = np.array([t.tforms[1].translation for t in t1])
-    aff = renderapi.transform.AffineModel()
-    aff.estimate(src, dst)
-    return aff
+
+def plot_lens_changes(
+        lcs, arrow_scale=10.0, num=1, pdfname='lens_changes.pdf'):
+    scale = 1.0 / arrow_scale
+    with PdfPages(pdfname) as pdf:
+        for lc in lcs:
+            tstamp = re.findall('\d+_reference', lc)[0].split('_')[0]
+            dt = datetime.datetime.strptime(tstamp, '%Y%m%d%H%M%S')
+            dtsf = dt.strftime('%Y-%m-%d %H:%M:%S')
+            ddir = os.path.dirname(lc)
+            mfile = glob.glob(os.path.join(ddir, '_metadata*.json'))[0]
+            with open(mfile, 'r') as f:
+                meta = json.load(f)
+            obj_focus = meta[0]['metadata']['objective_focus']
+            print(obj_focus)
+            with open(lc, 'r') as f:
+                tf = renderapi.transform.ThinPlateSplineTransform(
+                        json=json.load(f))
+                sz = tf.srcPts.max(axis=1)
+                src = src_from_xy(
+                        np.linspace(0, sz[0], 20),
+                        np.linspace(0, sz[1], 20))
+                dst = tf.tform(src)
+                delta = dst - src
+                rmax = np.linalg.norm(delta, axis=1).max()
+                fig, axes = plt.subplots(
+                        1, 1, num=1, clear=True, figsize=(11, 8))
+                axes.quiver(
+                        src[:, 0], src[:, 1], delta[:, 0], delta[:, 1],
+                        angles='xy', scale=scale, scale_units='xy')
+                axes.invert_yaxis()
+                axes.set_aspect('equal')
+                axes.set_title(
+                        dtsf + '\n' + lc + "\nfull transform max: %0.1f "
+                        "pixels\narrow scale = %0.1f\nobjective focus: %d" %
+                        (rmax, arrow_scale, obj_focus))
+                pdf.savefig(fig)
+
+
+def plot_residual_histograms(monbase, zr, axes_shape, num=1):
+    fig, axes = plt.subplots(
+            1, 4, clear=True,
+            num=num, sharex=True, sharey=True)
+    bins = np.arange(12)
+    iplot = 0
+    counts = []
+    for z in zr:
+        mondir = os.path.join(monbase, "%06d/0" % z)
+        res_path = os.path.join(mondir, 'residuals.json')
+        print(res_path)
+        if os.path.isfile(res_path):
+            print(res_path)
+            with open(res_path, 'r') as f:
+                j = json.load(f)
+            resmag = np.linalg.norm(np.array(j['res']), axis=1)
+
+            counts.append({
+                'z': z,
+                'n_good': len(j['res']),
+                'n_bad': len(j['filtered_res'])
+                })
+
+            if np.mod(np.argwhere(zr == z), 9) == 0:
+                resmag0 = resmag
+                zr[0] = z
+                print(zr[0])
+            a = axes.flatten()[iplot]
+            a.hist(resmag, bins=bins, color='g', label=('%d' % z))
+            a.hist(
+                    resmag0, bins=bins, histtype='step',
+                    color='k', label=('%d' % zr[0]))
+            a.legend(fontsize=6)
+            a.set_title('mean = %0.2f px' % resmag.mean())
+            iplot += 1
+    last_row = axes.shape[0] - 1
+
+    if len(axes.shape) == 1:
+        axes[0].set_xlabel('residual [px]')
+        axes[0].set_ylabel('match count')
+    else:
+        axes[last_row][0].set_xlabel('residual [px]')
+        axes[last_row][0].set_ylabel('match count')
+
+    f, a = plt.subplots(2, 1, clear=True, num=2, sharex=True)
+    zp = [i['z'] for i in counts]
+    g = [i['n_good'] for i in counts]
+    b = [i['n_bad'] for i in counts]
+    a[0].plot(zp, g, '-og', label='n matches kept')
+    a[1].plot(zp, b, '-or', label='n matches discarded')
+    a[1].set_xlabel('z')
+    a[0].set_title(monbase)
+    [ia.set_ylabel('n') for ia in a]
+    [ia.legend() for ia in a]
+
+
+def plot_filter_results(p, q, w, labels):
+    f, a = plt.subplots(1, 2, clear=True, num=1)
+    ulab = np.unique(labels)
+    color_id = plt.cm.tab20b(np.linspace(0, 1, ulab.size))
+    for u in ulab:
+        ind = np.argwhere(labels == u).flatten()
+        for iw, marker in zip([1.0, 0.0], ['o', 'X']):
+            j = np.isclose(w[ind], iw)
+            a[0].scatter(
+                    p[ind[j], 0],
+                    p[ind[j], 1],
+                    marker=marker,
+                    edgecolor='k',
+                    color=color_id[ulab == u][0])
+            a[1].scatter(
+                    q[ind[j], 0],
+                    q[ind[j], 1],
+                    marker=marker,
+                    edgecolor='k',
+                    color=color_id[ulab == u][0])
+    [ia.patch.set_color((0.85, 0.85, 0.85)) for ia in a]
+    [ia.set_aspect('equal') for ia in a]
+
 
 class LensCorrectionPlots():
-
     def __init__(self, datadir, outputdir):
         self.set_dir(datadir, outputdir)
 
@@ -37,7 +149,7 @@ class LensCorrectionPlots():
         self.logger = logging.getLogger(self.__class__.__name__)
         if pdfdir == 'from_files':
             pdfdir = self.outputdir
-       
+
         figs = []
         figs.append(self.quiver(arrow_scale=10))
         figs += self.data_coverage()
@@ -99,15 +211,17 @@ class LensCorrectionPlots():
 
         for m in orig:
             discarded = []
-            uind = np.argwhere((ups == m['pId']) & (uqs == m['qId'])).flatten()[0]
-            um = used[uind]
-            up = np.array(um['matches']['p']).transpose()
-            for op in np.array(m['matches']['p']).transpose():
-                tf = (up == op)
-                if np.any(tf[:, 0] & tf[:, 1]):
-                    discarded.append(0)
-                else:
-                    discarded.append(1)
+            uind = np.argwhere((ups == m['pId']) & (uqs == m['qId'])).flatten()
+            if uind.size > 0:
+                uind = uind[0]
+                um = used[uind]
+                up = np.array(um['matches']['p']).transpose()
+                for op in np.array(m['matches']['p']).transpose():
+                    tf = (up == op)
+                    if np.any(tf[:, 0] & tf[:, 1]):
+                        discarded.append(0)
+                    else:
+                        discarded.append(1)
             m['matches']['discarded'] = list(discarded)
         return orig
 
@@ -121,12 +235,17 @@ class LensCorrectionPlots():
         if self.lens_corr_file is None:
             print('no lens correction file')
             return
-      
-        ref = renderapi.transform.ThinPlateSplineTransform(json=self.lens_corr_file)
-        raw = [renderapi.tilespec.TileSpec(json=j) for j in self.raw_tilespecs]
-        slv = [renderapi.tilespec.TileSpec(json=j) for j in self.solved_tilespecs]
-        rtb = [t.bbox_transformed(reference_tforms=[ref]) for t in raw]
-        stb = [t.bbox_transformed(reference_tforms=[ref]) for t in slv]
+
+        ref = renderapi.transform.ThinPlateSplineTransform(
+                json=self.lens_corr_file)
+        raw = [renderapi.tilespec.TileSpec(json=j)
+               for j in self.raw_tilespecs]
+        slv = [renderapi.tilespec.TileSpec(json=j)
+               for j in self.solved_tilespecs]
+        rtb = [t.bbox_transformed(reference_tforms=[ref])
+               for t in raw]
+        stb = [t.bbox_transformed(reference_tforms=[ref])
+               for t in slv]
 
         rcorner = np.array([r[0, :2] for r in rtb])
         scorner = np.array([r[0, :2] for r in stb])
@@ -135,11 +254,13 @@ class LensCorrectionPlots():
         ax.plot(rcorner[:, 0], rcorner[:, 1], 'ok', alpha=0.5)
         ax.plot(scorner[:, 0], scorner[:, 1], 'og', alpha=0.5)
         ax.set_aspect('equal')
-        ax.legend(['original tile corners', 'translation solved tile corners'], loc=(0.25, 0.25))
+        ax.legend([
+            'original tile corners',
+            'translation solved tile corners'], loc=(0.25, 0.25))
 
-        aff = estimate_stage_affine(raw, slv)
+        self.aff = estimate_stage_affine(raw, slv)
         astr = ""
-        for a in aff.M:
+        for a in self.aff.M:
             for ia in a:
                 astr += "%10.4f " % ia
             astr += '\n'
@@ -149,8 +270,9 @@ class LensCorrectionPlots():
 
         return fig
 
-
-    def data_coverage(self, fignum=None, ax_shape=(4, 5), show_residuals=False, clim=5):
+    def data_coverage(
+            self, fignum=None, ax_shape=(4, 5),
+            show_residuals=False, clim=5):
         if self.raw_tilespecs is None:
             print('no raw tilespecs file')
             return
@@ -164,7 +286,7 @@ class LensCorrectionPlots():
         all_matches = self.templatefile['collection']
         matches = self.add_discarded(all_matches, self.collectionfile)
         ckey = 'discarded'
-        cmap='Set1_r'
+        cmap = 'Set1_r'
 
         if show_residuals:
             if self.solved_tilespecs is None:
@@ -175,11 +297,12 @@ class LensCorrectionPlots():
                 return
             matches = self.add_residuals(
                     self.collectionfile,
-                    [renderapi.tilespec.TileSpec(json=t) for t in self.solved_tilespecs],
-                    renderapi.transform.ThinPlateSplineTransform(json=self.lens_corr_file))
+                    [renderapi.tilespec.TileSpec(json=t)
+                     for t in self.solved_tilespecs],
+                    renderapi.transform.ThinPlateSplineTransform(
+                        json=self.lens_corr_file))
             ckey = 'res'
-            cmap= 'magma'
-
+            cmap = 'magma'
 
         tspecs = np.array([renderapi.tilespec.TileSpec(
             json=ij) for ij in self.raw_tilespecs])
@@ -192,7 +315,9 @@ class LensCorrectionPlots():
         axes = []
 
         for i in range(nfigs):
-            f, a = plt.subplots(ax_shape[0], ax_shape[1], num=fignum, clear=True, figsize=(11, 8))
+            f, a = plt.subplots(
+                    ax_shape[0], ax_shape[1], num=fignum,
+                    clear=True, figsize=(11, 8))
             figs.append(f)
             fignum = f.number + 1
             axes.append(a.flatten())
@@ -208,17 +333,32 @@ class LensCorrectionPlots():
             pind = np.argwhere(tids == m['pId']).flatten()[0]
             qind = np.argwhere(tids == m['qId']).flatten()[0]
             pspec = tspecs[pind]
-            qspec = tspecs[qind]
-            _ = [axes[i].plot(b[:, 0], b[:, 1], '-k', alpha=0.05) for b in bboxes]
-            axes[i].plot(bboxes[pind][:, 0], bboxes[pind][:, 1], color='g', alpha=0.2)
-            axes[i].plot(bboxes[qind][:, 0], bboxes[qind][:, 1], color='k', alpha=0.2)
+            [axes[i].plot(b[:, 0], b[:, 1], '-k', alpha=0.05)
+             for b in bboxes]
+            axes[i].plot(
+                    bboxes[pind][:, 0],
+                    bboxes[pind][:, 1],
+                    color='g',
+                    alpha=0.2)
+            axes[i].plot(
+                    bboxes[qind][:, 0],
+                    bboxes[qind][:, 1],
+                    color='k',
+                    alpha=0.2)
             axes[i].set_aspect('equal')
 
-            pxy = pspec.tforms[0].tform(np.array(m['matches']['p']).transpose())
+            pxy = pspec.tforms[0].tform(
+                    np.array(m['matches']['p']).transpose())
 
             c = m['matches'][ckey]
 
-            a1 = axes[i].scatter(pxy[:, 0], pxy[:, 1], marker='s', c=c, s=7.3, cmap=cmap)
+            a1 = axes[i].scatter(
+                    pxy[:, 0],
+                    pxy[:, 1],
+                    marker='s',
+                    c=c,
+                    s=7.3,
+                    cmap=cmap)
             if show_residuals:
                 a1.set_clim(0, clim)
 
@@ -228,7 +368,9 @@ class LensCorrectionPlots():
         if show_residuals:
             figs[-1].colorbar(a1, ax=axes[-1])
 
-        f, axes2 = plt.subplots(1, 2, num=fignum, clear=True, sharex=True, sharey=True, figsize=(11, 8))
+        f, axes2 = plt.subplots(
+                1, 2, num=fignum, clear=True,
+                sharex=True, sharey=True, figsize=(11, 8))
         bbox = tspecs[0].bbox_transformed(tf_limit=0)
         for a in axes2:
             a.plot(bbox[:, 0], bbox[:, 1], color='k', alpha=0.2)
@@ -236,8 +378,10 @@ class LensCorrectionPlots():
         q = np.concatenate([m['matches']['q'] for m in matches], axis=1)
         c = np.concatenate([m['matches'][ckey] for m in matches])
         scatts = []
-        scatts.append(axes2[0].scatter(p[0, :], p[1, :], marker='s', c=c, s=7.3, alpha=0.3, cmap=cmap))
-        scatts.append(axes2[1].scatter(q[0, :], q[1, :], marker='s', c=c, s=7.3, alpha=0.3, cmap=cmap))
+        scatts.append(axes2[0].scatter(
+            p[0, :], p[1, :], marker='s', c=c, s=7.3, alpha=0.3, cmap=cmap))
+        scatts.append(axes2[1].scatter(
+            q[0, :], q[1, :], marker='s', c=c, s=7.3, alpha=0.3, cmap=cmap))
         axes2[0].set_title('matches \"p\"')
         axes2[1].set_title('matches \"q\"')
         [ax.set_aspect('equal') for ax in axes2.flatten()]
@@ -261,12 +405,12 @@ class LensCorrectionPlots():
 
         tform = renderapi.transform.ThinPlateSplineTransform(
                 json=self.lens_corr_file)
-        
+
         xmin = tform.srcPts[0, :].min()
         xmax = tform.srcPts[0, :].max()
         ymin = tform.srcPts[1, :].min()
         ymax = tform.srcPts[1, :].max()
-        
+
         x = np.linspace(xmin, xmax, quiver_grid_size)
         y = np.linspace(ymin, ymax, quiver_grid_size)
         xt, yt = np.meshgrid(x, y)
@@ -275,12 +419,18 @@ class LensCorrectionPlots():
         delta = dst - src
 
         rmax = np.linalg.norm(delta, axis=1).max()
-        
+
         scale1 = 1.0 / arrow_scale
-        
+
         fig, axes = plt.subplots(1, 1, num=fignum, clear=True, figsize=(11, 8))
-        axes.quiver(src[:, 0], src[:, 1], delta[:, 0], delta[:, 1],
-             angles='xy', scale=scale1, scale_units='xy')
+        axes.quiver(
+                src[:, 0],
+                src[:, 1],
+                delta[:, 0],
+                delta[:, 1],
+                angles='xy',
+                scale=scale1,
+                scale_units='xy')
         axes.invert_yaxis()
         axes.set_aspect('equal')
         axes.set_title("full transform max: %0.1f "
@@ -288,8 +438,8 @@ class LensCorrectionPlots():
 
         return fig
 
+
 if __name__ == "__main__":
-    pmod = LensCorrectionPlots(
-            "/allen/programs/celltypes/workgroups/em-connectomics/jayb/lens_correction5/20190215123623_reference/0",
-            "/allen/programs/celltypes/workgroups/em-connectomics/danielk/em_lens_correction/tmp")
-    pmod.make_all_plots()
+    ddir = "/data/em-131fs3/lctest/T4_6/20190306145208_reference/0"
+    pmod = LensCorrectionPlots(ddir, ddir)
+    pmod.make_all_plots(pdfdir=ddir)

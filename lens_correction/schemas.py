@@ -1,9 +1,11 @@
 import warnings
 from marshmallow.warnings import ChangedInMarshmallow3Warning
+import argschema
 from argschema import ArgSchema
 from argschema.schemas import DefaultSchema
 from argschema.fields import (
-        Boolean, InputDir, InputFile, Float, Int, OutputFile, OutputDir, Str, Nested)
+        Boolean, InputDir, InputFile, Float,
+        Int, OutputFile, OutputDir, Str, Nested)
 warnings.simplefilter(
         action='ignore',
         category=ChangedInMarshmallow3Warning)
@@ -41,7 +43,6 @@ class GenerateEMTileSpecsParameters(ArgSchema):
     output_path = OutputFile(
         required=False,
         description="directory for output files")
-
 
 
 class regularization(DefaultSchema):
@@ -136,3 +137,86 @@ class LensCorrectionSchema(ArgSchema):
         default=False,
         description="output pdf plots (was slow on windows)")
 
+
+class MetaToMontageAndCollectionSchema(ArgSchema):
+    data_dir = InputDir(
+        required=True,
+        description="directory containing metafile, images, and matches")
+    output_dir = OutputDir(
+        required=False,
+        description="directory for output files")
+    ref_transform = InputFile(
+        required=False,
+        missing=None,
+        default=None,
+        description="transform json")
+    ransacReprojThreshold = Float(
+        required=False,
+        missing=10.0,
+        default=10.0,
+        description=("passed into cv2.estimateAffinePartial2D()"
+                     "for RANSAC filtering of montage template matches"))
+
+
+class RenderClientParameters(argschema.schemas.DefaultSchema):
+    host = argschema.fields.Str(
+        required=True, description='render host')
+    port = argschema.fields.Int(
+        required=True, description='render post integer')
+    owner = argschema.fields.Str(
+        required=True, description='render default owner')
+    project = argschema.fields.Str(
+        required=True, description='render default project')
+    client_scripts = argschema.fields.Str(
+        required=True, description='path to render client scripts')
+    memGB = argschema.fields.Str(
+        required=False, default='5G',
+        description='string describing java heap memory (default 5G)')
+
+
+class UploadToRenderSchema(ArgSchema):
+    render = argschema.fields.Nested(
+        RenderClientParameters,
+        required=True,
+        description="parameters to connect to render server")
+    data_dir = InputDir(
+        required=True,
+        description="directory containing metafile, images, and matches")
+    stack = Str(
+        required=True,
+        description="stack name")
+    collection = Str(
+        required=True,
+        description="collection name")
+
+
+class MontagePlotsSchema(ArgSchema):
+    render = argschema.fields.Nested(
+        RenderClientParameters,
+        required=True,
+        description="parameters to connect to render server")
+    output_dir = OutputDir(
+        required=True,
+        description="directory containing metafile, images, and matches")
+    stack = Str(
+        required=True,
+        description="stack name")
+    collection = Str(
+        required=True,
+        description="collection name")
+    sectionId = Str(
+        required=True,
+        description='sectionId/groupId')
+    z = Int(
+        required=True,
+        description='z value in stack')
+    make_plot = Boolean(
+        required=True,
+        default=True,
+        missing=True,
+        description="make the plot and save it")
+    save_json = Boolean(
+        required=True,
+        default=True,
+        missing=True,
+        description="save the json of the residuals")
