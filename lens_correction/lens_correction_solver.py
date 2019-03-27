@@ -97,8 +97,11 @@ def make_collection_json(template_file, output_dir, thresh):
 class LensCorrectionSolver(ArgSchemaParser):
     default_schema = LensCorrectionSchema
 
-    def run(self):
+    def __init__(self, *args, **kwargs):
+        super(LensCorrectionSolver, self).__init__(*args, **kwargs)
         self.jtform = None
+
+    def run(self):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.check_for_files()
         self.output_dir = self.args.get('output_dir', self.args['data_dir'])
