@@ -98,6 +98,7 @@ class LensCorrectionSolver(ArgSchemaParser):
     default_schema = LensCorrectionSchema
 
     def run(self):
+        self.jtform = None
         self.logger = logging.getLogger(self.__class__.__name__)
         self.check_for_files()
         self.output_dir = self.args.get('output_dir', self.args['data_dir'])
