@@ -152,13 +152,13 @@ class LensCorrectionSolver(ArgSchemaParser):
                 os.path.join(
                     self.output_dir,
                     solver_args['outfile']), 'r') as f:
-            jtform = json.load(f)
+            self.jtform = json.load(f)
 
         rspec = renderapi.tilespec.TileSpec(json=jtspecs[0])
 
         self.map1, self.map2, self.mask = maps_from_tform(
                 renderapi.transform.ThinPlateSplineTransform(
-                    json=jtform),
+                    json=self.jtform),
                 rspec.width,
                 rspec.height,
                 self.logger,
