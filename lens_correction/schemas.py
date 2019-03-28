@@ -145,6 +145,11 @@ class MetaToMontageAndCollectionSchema(ArgSchema):
     output_dir = OutputDir(
         required=False,
         description="directory for output files")
+    read_transform_from_meta = Boolean(
+        required=False,
+        missing=True,
+        default=True,
+        description="read lens correction transform from metafile")
     ref_transform = InputFile(
         required=False,
         missing=None,

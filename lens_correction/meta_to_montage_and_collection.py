@@ -75,27 +75,36 @@ class MetaToMontageAndCollection(ArgSchemaParser):
         with open(tspecin['output_path'], 'r') as f:
             rtj = json.load(f)
 
-        # copy and read in the transform
-        tfpath = os.path.join(
-                self.args['output_dir'],
-                'lens_corr_transform.json')
-        if self.args['ref_transform'] != tfpath:
-            shutil.copy(self.args['ref_transform'], tfpath)
-        with open(tfpath, 'r') as f:
-            tfj = json.load(f)
+        if self.args['read_transform_from_meta']:
+            with open(metafile, 'r') as f:
+                j = json.load(f)
+            tfj = j[2]['sharedTransform']
+        else:
+            # read in the transform from another folder
+            tfpath = os.path.join(
+                    self.args['output_dir'],
+                    'lens_corr_transform.json')
+            with open(tfpath, 'r') as f:
+                tfj = json.load(f)
 
         ref = renderapi.transform.ReferenceTransform()
         ref.refId = tfj['id']
-
         for t in rtj:
             t['transforms']['specList'].insert(0, ref.to_dict())
 
+        tspecs = [renderapi.tilespec.TileSpec(json=t) for t in rtj]
+        tform = renderapi.transform.Transform(json=tfj)
+
+        resolved = renderapi.resolvedtiles.ResolvedTiles(
+                tilespecs=tspecs,
+                transformList=[tform])
+
         apply_lens_path = os.path.join(
                 self.args['output_dir'],
-                "apply_lens_tilespecs.json")
+                "ResolvedTiles.json")
 
         with open(apply_lens_path, 'w') as f:
-            json.dump(rtj, f, indent=2)
+            json.dump(resolved.to_dict(), f, indent=2)
 
 
 if __name__ == "__main__":
