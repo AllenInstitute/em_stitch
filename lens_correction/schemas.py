@@ -4,7 +4,7 @@ import argschema
 from argschema import ArgSchema
 from argschema.schemas import DefaultSchema
 from argschema.fields import (
-        Boolean, InputDir, InputFile, Float,
+        Boolean, InputDir, InputFile, Float, List,
         Int, OutputFile, OutputDir, Str, Nested)
 warnings.simplefilter(
         action='ignore',
@@ -136,6 +136,13 @@ class LensCorrectionSchema(ArgSchema):
         missing=False,
         default=False,
         description="output pdf plots (was slow on windows)")
+    ignore_match_indices = List(
+        Int,
+        required=False,
+        default=None,
+        missing=None,
+        description=("debug feature for ignoring certain indices"
+                     " of the match collection"))
 
 
 class MetaToMontageAndCollectionSchema(ArgSchema):
