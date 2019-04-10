@@ -78,8 +78,8 @@ def maps_from_tform(tform, width, height, logger, block_size=10000, res=32):
     fx = np.arange(0, width)
     fy = np.arange(0, height)
     src = np.flipud(src_from_xy(fx, fy, transpose=False).astype('float32'))
-    src[0, :] *= ((ix.shape[0] - 1) / y.max())
-    src[1, :] *= ((ix.shape[1] - 1) / x.max())
+    src[0, :] *= (float(ix.shape[0] - 1) / y.max())
+    src[1, :] *= (float(ix.shape[1] - 1) / x.max())
 
     dx = ndimage.map_coordinates(ix, src, order=1)
     dy = ndimage.map_coordinates(iy, src, order=1)

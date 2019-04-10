@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/AllenInstitute/em-lens-correction.svg?branch=master)](https://travis-ci.org/AllenInstitute/em-lens-correction)
+[![codecov](https://codecov.io/gh/AllenInstitute/em-lens-correction/branch/master/graph/badge.svg)](https://codecov.io/gh/AllenInstitute/em-lens-correction)
+
 # em-lens-correction
 
 Lens correction solver and utilities for stitching montages at acquisition time.
