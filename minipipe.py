@@ -11,8 +11,35 @@ from EMaligner.EMaligner import EMaligner
 import numpy as np
 
 refdir = None
-monbase = "/data/em-131fs3/lctest/jayb13"
-zr = range(1986, 1991)
+monbase = "/data/em-131fs3/lctest/T4_jayb13"
+zr = list(range(1990, 1995)) + list(range(1996, 1999))
+#zr = range(1990, 1999)
+
+monbase = "/data/em-131fs3/lctest/T6_1"
+zr = list(range(136, 142))
+zr += list(range(142, 143))
+zr += list(range(144, 157))
+
+monbase = "/data/em-131fs3/lctest/T4_20180329a"
+zr = range(1990, 1995)
+
+refdir = '/data/em-131fs3/lctest/T4_06/20190314112300_reference/0'
+monbase = "/data/em-131fs3/lctest/T4_06"
+read_transform_from_meta = False
+zr = range(1931, 1939)
+
+refdir = None
+monbase = '/data/em-131fs3/lctest/T6_20190401a'
+zr = range(136, 138)
+read_transform_from_meta = True
+polynomial = False
+
+monbase = '/data/em-131fs3/lctest/T6_20190401_4pctOverlap'
+zr = [67]
+
+monbase = '/data/em-131fs3/lctest/T4_20180401_7pctOverlap'
+zr = [1992]
+
 
 for z in zr:
     mondir = os.path.join(monbase,"%06d/0" % z)
@@ -33,6 +60,7 @@ for z in zr:
     else:
         meta_args['ref_transform'] = glob.glob(
                 os.path.join(refdir, "lens_correction_transform.json"))[0]
+    meta_args['read_transform_from_meta'] = read_transform_from_meta
     
     upload_args['data_dir'] = mondir
     rndr_name = monbase.replace("/", "_").replace("-", "")[1:]
@@ -47,8 +75,9 @@ for z in zr:
     z = get_z_from_metafile(metap)
     solver_args['first_section'] = z
     solver_args['last_section'] = z
-    #solver_args['regularization']['default_lambda'] = 1000
-    #solver_args['transformation'] = 'Polynomial2DTransform'
+    if polynomial:
+        solver_args['regularization']['default_lambda'] = 1000
+        solver_args['transformation'] = 'Polynomial2DTransform'
     
     mplot_args['stack'] = solver_args['output_stack']['name']
     mplot_args['collection'] = solver_args['pointmatch']['name']
