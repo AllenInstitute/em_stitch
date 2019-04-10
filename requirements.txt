@@ -1,6 +1,6 @@
 argschema
 render-python>=2.2.0
-numpy
+numpy>=1.13
 scipy
-opencv-python
+opencv-python>=3.4
 triangle
