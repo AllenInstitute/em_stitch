@@ -9,3 +9,4 @@ flake8>=3.0.4
 pylint>=1.5.4
 jinja2
 shapely
+scikit-image
