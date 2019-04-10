@@ -110,8 +110,8 @@ def plot_residual_histograms(monbase, zr, axes_shape, num=1):
     [ia.legend() for ia in a]
 
 
-def plot_filter_results(p, q, w, labels):
-    f, a = plt.subplots(1, 2, clear=True, num=1)
+def plot_filter_results(p, q, w, labels, num=1):
+    f, a = plt.subplots(1, 2, clear=True, num=num)
     ulab = np.unique(labels)
     color_id = plt.cm.tab20b(np.linspace(0, 1, ulab.size))
     for u in ulab:
