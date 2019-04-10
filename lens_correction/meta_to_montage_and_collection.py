@@ -39,8 +39,6 @@ class MetaToMontageAndCollection(ArgSchemaParser):
             j = json.load(f)
         groupId = j[0]['pGroupId']
 
-        print(groupId)
-
         # filter the collection
         for match in j:
             _, _, w, _ = pointmatch_filter(
@@ -81,10 +79,7 @@ class MetaToMontageAndCollection(ArgSchemaParser):
             tfj = j[2]['sharedTransform']
         else:
             # read in the transform from another folder
-            tfpath = os.path.join(
-                    self.args['output_dir'],
-                    'lens_corr_transform.json')
-            with open(tfpath, 'r') as f:
+            with open(self.args['ref_transform'], 'r') as f:
                 tfj = json.load(f)
 
         ref = renderapi.transform.ReferenceTransform()
