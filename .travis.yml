@@ -18,4 +18,4 @@ env:
 script:
 - python setup.py test
 after_success:
-- codecov -t 31f0f992-618d-4d7d-9da2-69f45c32455e
+- codecov -t 27ef6fc2-7ebc-4ff5-94c9-58c0c10f26c0
