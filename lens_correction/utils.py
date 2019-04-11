@@ -4,6 +4,10 @@ import renderapi
 import time
 from scipy import ndimage
 import json
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_z_from_metafile(metafile):
@@ -65,7 +69,7 @@ def split_inverse_tform(tform, src, block_size):
     return dst
 
 
-def maps_from_tform(tform, width, height, logger, block_size=10000, res=32):
+def maps_from_tform(tform, width, height, block_size=10000, res=32):
     t0 = time.time()
 
     x = np.arange(0, width + res, res)
