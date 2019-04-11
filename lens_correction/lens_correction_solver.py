@@ -34,7 +34,6 @@ example = {
 class LensCorrectionException(Exception):
     pass
 
-
 def one_file(fdir, fstub):
     fullstub = os.path.join(fdir, fstub)
     files = glob.glob(fullstub)
