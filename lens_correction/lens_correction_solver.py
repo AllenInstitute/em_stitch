@@ -36,7 +36,6 @@ class LensCorrectionException(Exception):
 
 
 # trivial change
-#flake8 should speak up on this
 
 
 def one_file(fdir, fstub):
