@@ -1,3 +1,4 @@
+stage: tests
 language: python
 python:
 - '2.7'
@@ -20,8 +21,12 @@ script:
 - python setup.py test
 cache:
 - pip
-after_success:
-- codecov -t 27ef6fc2-7ebc-4ff5-94c9-58c0c10f26c0
-- chmod +x .travis/merge_script.sh
-- BRANCHES_TO_MERGE_REGEX='develop' BRANCH_TO_MERGE_INTO=master GITHUB_REPO=AllenInstitute/em-lens-correction
-  .travis/merge_script.sh
+jobs:
+  include:
+    stage: push
+    install: skip
+    script: skip
+    after_success: 
+    - codecov -t 27ef6fc2-7ebc-4ff5-94c9-58c0c10f26c0
+    - chmod +x .travis/merge_script.sh
+    - BRANCHES_TO_MERGE_REGEX='develop' BRANCH_TO_MERGE_INTO=master GITHUB_REPO=AllenInstitute/em-lens-correction .travis/merge_script.sh
