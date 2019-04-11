@@ -23,6 +23,7 @@ cache:
 - pip
 jobs:
   include:
+    if: branch = develop
     stage: push
     install: skip
     script: skip
