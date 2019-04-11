@@ -28,7 +28,7 @@ example = {
             "translation_factor": 1e-3
             },
         "log_level": "INFO",
-        "write_pdf": True
+        "write_pdf": False
         }
 
 
