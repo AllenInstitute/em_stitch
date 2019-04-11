@@ -1,11 +1,10 @@
 stage: tests
 language: python
 python:
-- '2.7'
-- '3.5'
-- 3.5-dev
-- '3.6'
-- 3.6-dev
+- "3.5"
+- "3.6"
+- "3.6-dev"
+- "3.7-dev"
 install:
 - pip install codecov
 - pip install -r requirements.txt
