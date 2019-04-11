@@ -17,6 +17,8 @@ env:
   - secure: BHefw1uJ0pVGIiPf9Jb1sMT8f5Dq4QmHjmyfa326QnLceYKci6XxWUYXTu2V8R4hEGmlW6b9cl074+fFlI9HjFJZnb8+P5M54IeRbgP8Y6e0w1gaFR75NNS+FU0ZmLCKN6zCZIkjQdjRE+4XtXwya6F4u/pilNgtyOgoIY+L/I2+0ZjOxcJ/yKFsPyTxg28H66P6b7BjwzrpoYabTUapJFd7KLMbCCpstw5/3aLhkvYMrmEM2h6Lcde0+Ne5UPZ2BFFP0Zcf31sV2i3jpnzbpCs7A9jl+s+UOBIWwjaV3lEuGM5cgfIII/3nhdYeGJ6KyXXXIiTcOlns+suTw5II04DyXtG7ltJ3Jue3AtYa2Drj9oM111WqoolDyuQfxX66IDKe2mb96iyQBf78cCjm3zVyipSGDntpBEq44Ss/f7d/Hl7m/Ls5Soh50DWDr8TXkYSMib/5xbAF+N28PUs0BYR+dgIqFDgZ8bLOPcw1E10L4LZwZ+E0kp8JKX2sWZe7XveFgNv4d2fJpqkp/1zis69z6pKMZrQWur6+ZahxOWHpUdOWndK2cPXe8PvUyRhHlUayb15FIAjRRStdSZt7t+9yRnNJisPZKpRUwMZrKZDUK/8Pvn76Z8FmEd18c7kBOSSTaR0iGa25ganP+Fqvzh986qEm8nC8ZcpaQqpE8NE=
 script:
 - python setup.py test
+cache:
+- pip
 after_success:
 - codecov -t 27ef6fc2-7ebc-4ff5-94c9-58c0c10f26c0
 - "BRANCHES_TO_MERGE_REGEX='develop' BRANCH_TO_MERGE_INTO=master GITHUB_REPO=AllenInstitute/em-lens-correction .travis/merge_script.sh"
