@@ -3,7 +3,7 @@ from .schemas import LensCorrectionSchema
 from .generate_EM_tilespecs_from_metafile import GenerateEMTileSpecsModule
 from .mesh_and_solve_transform import MeshAndSolveTransform
 from .plots import LensCorrectionPlots
-from .utils import pointmatch_filter, maps_from_tform
+import utils
 import logging
 import os
 import glob
@@ -78,7 +78,7 @@ def make_collection_json(template_file, output_dir, thresh):
         ind = np.arange(len(m['matches']['p'][0]))
         counts[-1]['n_from_gpu'] = ind.size
 
-        _, _, w, _ = pointmatch_filter(
+        _, _, w, _ = utils.pointmatch_filter(
                 m,
                 n_clusters=None,
                 n_cluster_pts=20,
@@ -103,6 +103,8 @@ class LensCorrectionSolver(ArgSchemaParser):
 
     def run(self):
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.setLevel(self.args['log_level'])
+        utils.logger.setLevel(self.args['log_level'])
         self.check_for_files()
         self.output_dir = self.args.get('output_dir', self.args['data_dir'])
         self.logger.info("destination directory:\n  %s" % self.output_dir)
@@ -160,12 +162,11 @@ class LensCorrectionSolver(ArgSchemaParser):
 
         rspec = renderapi.tilespec.TileSpec(json=jtspecs[0])
 
-        self.map1, self.map2, self.mask = maps_from_tform(
+        self.map1, self.map2, self.mask = utils.maps_from_tform(
                 renderapi.transform.ThinPlateSplineTransform(
                     json=self.jtform),
                 rspec.width,
                 rspec.height,
-                self.logger,
                 res=32)
 
         maskname = os.path.join(self.output_dir, 'mask.png')

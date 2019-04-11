@@ -5,7 +5,6 @@ from lens_correction.utils import (
         remove_weighted_matches,
         estimate_stage_affine)
 import renderapi
-import logging
 import numpy as np
 import copy
 
@@ -83,13 +82,11 @@ def test_split_inverse():
 
 
 def test_make_maps():
-    logger = logging.getLogger()
-
     # identity transform
     width = height = 1000
     tform = renderapi.transform.AffineModel()
     map1, map2, mask = maps_from_tform(
-            tform, width, height, logger)
+            tform, width, height)
     x = np.arange(width)
     y = np.arange(height)
     xt, yt = np.meshgrid(x, y)
@@ -112,7 +109,7 @@ def test_make_maps():
 
     # check that the results match the easy way
     map1, map2, mask = maps_from_tform(
-            tform, width, height, logger)
+            tform, width, height)
     assert np.all(np.isclose(map1, dx))
     assert np.all(np.isclose(map2, dy))
     assert np.any(mask == 0)
