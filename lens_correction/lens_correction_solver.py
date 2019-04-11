@@ -14,6 +14,7 @@ import cv2
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
+logger = logging.getLogger()
 
 example = {
         "data_dir": "/data/em-131fs3/lctest/T4_07/20190315142205_reference/0",
@@ -27,7 +28,7 @@ example = {
             "translation_factor": 1e-3
             },
         "log_level": "INFO",
-        "write_pdf": True
+        "write_pdf": False
         }
 
 
@@ -69,7 +70,12 @@ def tilespec_input_from_metafile(
     return result
 
 
-def make_collection_json(template_file, output_dir, thresh):
+def make_collection_json(
+        template_file,
+        output_dir,
+        thresh,
+        ignore_match_indices=None):
+
     with open(template_file, 'r') as f:
         matches = json.load(f)
     collection_file = os.path.join(
@@ -92,8 +98,16 @@ def make_collection_json(template_file, output_dir, thresh):
 
         counts[-1]['n_after_filter'] = np.count_nonzero(w)
 
+    m = matches['collection']
+
+    if ignore_match_indices:
+        m = [match for i, match in enumerate(matches['collection'])
+             if i not in ignore_match_indices]
+        logger.warning("you are ignoring some point matches")
+
     with open(collection_file, 'w') as f:
-        json.dump(matches['collection'], f)
+        json.dump(m, f)
+
     return collection_file, counts
 
 
@@ -127,7 +141,8 @@ class LensCorrectionSolver(ArgSchemaParser):
         collection_path, self.filter_counts = make_collection_json(
                 self.matchfile,
                 self.output_dir,
-                self.args['ransac_thresh'])
+                self.args['ransac_thresh'],
+                self.args['ignore_match_indices'])
 
         self.n_from_gpu = np.array(
                 [i['n_from_gpu'] for i in self.filter_counts]).sum()

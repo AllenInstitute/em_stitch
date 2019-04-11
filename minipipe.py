@@ -10,56 +10,35 @@ from lens_correction.montage_plots import MontagePlots
 from EMaligner.EMaligner import EMaligner
 import numpy as np
 
-#refdir = "/data/em-131fs3/lctest/T6_13/20190307140403_reference/0"
-#zr = np.concatenate([[3197, 3198, 3199, 3202, 3203], range(3205, 3226), [3232, 3239, 3240]])
-#zr = [3198]
-#
-#refdir = "/data/em-131fs3/lctest/T4_02/20190312121454_reference/0"
-#monbase = "/data/em-131fs3/lctest/T4_02"
-#zr = range(1848, 1881)
-#
-#refdir = "/data/em-131fs3/lctest/T4_03/20190313102111_reference/0"
-#monbase = "/data/em-131fs3/lctest/T4_03"
-#zr = range(1880, 1886)
-#zr = [1880]
+refdir = None
+monbase = "/data/em-131fs3/lctest/T4_jayb13"
+zr = list(range(1990, 1995)) + list(range(1996, 1999))
+#zr = range(1990, 1999)
 
-refdir = "/data/em-131fs3/lctest/AI007_large_aperture_test/20190313145211_reference/0"
-monbase = "/data/em-131fs3/lctest/AI007_large_aperture_test"
-zr = [46]
-#refdir = "/data/em-131fs3/lctest/AI007_large_aperture_test/20190313153231_reference/0"
-#monbase = "/data/em-131fs3/lctest/AI007_large_aperture_test"
-#zr = [58]
-#refdir = "/data/em-131fs3/lctest/AI007_large_aperture_test/20190313162722_reference/0"
-#monbase = "/data/em-131fs3/lctest/AI007_large_aperture_test"
-#zr = [117]
-#refdir = "/data/em-131fs3/lctest/AI007_large_aperture_test/20190314120221_reference/0"
-#monbase = "/data/em-131fs3/lctest/AI007_large_aperture_test"
-#zr = [122]
+monbase = "/data/em-131fs3/lctest/T6_1"
+zr = list(range(136, 142))
+zr += list(range(142, 143))
+zr += list(range(144, 157))
 
-refdir = "/data/em-131fs3/lctest/T4_07/20190315150001_reference/0"
-monbase = "/data/em-131fs3/lctest/T4_07"
-zr = [1935]
+monbase = "/data/em-131fs3/lctest/T4_20180329a"
+zr = range(1990, 1995)
 
-refdir = "/data/em-131fs3/lctest/T4_07/20190315142205_reference/0"
-monbase = "/data/em-131fs3/lctest/T4_07"
-zr = [1931]
+refdir = '/data/em-131fs3/lctest/T4_06/20190314112300_reference/0'
+monbase = "/data/em-131fs3/lctest/T4_06"
+read_transform_from_meta = False
+zr = range(1931, 1939)
 
-#refdir = "/data/em-131fs3/lctest/T4_05/20190313171227_reference/0"
-#monbase = "/data/em-131fs3/lctest/T4_05"
-#zr = range(1894, 1903)
-#refdir = "/data/em-131fs3/lctest/T4_05/20190313211417_reference/0"
-#monbase = "/data/em-131fs3/lctest/T4_05"
-#zr = range(1903, 1912)
-#refdir = "/data/em-131fs3/lctest/T4_05/20190314011548_reference/0"
-#monbase = "/data/em-131fs3/lctest/T4_05"
-#zr = range(1912, 1922)
-#refdir = "/data/em-131fs3/lctest/T4_05/20190314011548_reference/0"
-#monbase = "/data/em-131fs3/lctest/T4_05"
-#zr = range(1912, 1922)
-#refdir = "/data/em-131fs3/lctest/T4_06/20190314112300_reference/0"
-#monbase = "/data/em-131fs3/lctest/T4_06"
-#zr = range(1931, 1933)
-#zr = [1933]
+refdir = None
+monbase = '/data/em-131fs3/lctest/T6_20190401a'
+zr = range(136, 138)
+read_transform_from_meta = True
+polynomial = False
+
+monbase = '/data/em-131fs3/lctest/T6_20190401_4pctOverlap'
+zr = [67]
+
+monbase = '/data/em-131fs3/lctest/T4_20180401_7pctOverlap'
+zr = [1992]
 
 
 for z in zr:
@@ -76,8 +55,12 @@ for z in zr:
     
     meta_args['data_dir'] = mondir
     meta_args['output_dir'] = mondir
-    meta_args['ref_transform'] = glob.glob(
-            os.path.join(refdir, "lens_correction_transform.json"))[0]
+    if refdir is None:
+        meta_args['ref_transform'] = None
+    else:
+        meta_args['ref_transform'] = glob.glob(
+                os.path.join(refdir, "lens_correction_transform.json"))[0]
+    meta_args['read_transform_from_meta'] = read_transform_from_meta
     
     upload_args['data_dir'] = mondir
     rndr_name = monbase.replace("/", "_").replace("-", "")[1:]
@@ -92,8 +75,9 @@ for z in zr:
     z = get_z_from_metafile(metap)
     solver_args['first_section'] = z
     solver_args['last_section'] = z
-    #solver_args['regularization']['default_lambda'] = 1000
-    #solver_args['transformation'] = 'Polynomial2DTransform'
+    if polynomial:
+        solver_args['regularization']['default_lambda'] = 1000
+        solver_args['transformation'] = 'Polynomial2DTransform'
     
     mplot_args['stack'] = solver_args['output_stack']['name']
     mplot_args['collection'] = solver_args['pointmatch']['name']

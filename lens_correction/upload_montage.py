@@ -27,19 +27,15 @@ class UploadToRender(ArgSchemaParser):
         def topath(basename):
             return os.path.join(self.args['data_dir'], basename)
 
-        with open(topath("lens_corr_transform.json"), 'r') as f:
-            ref = renderapi.transform.ThinPlateSplineTransform(
+        with open(topath("ResolvedTiles.json"), 'r') as f:
+            res = renderapi.resolvedtiles.ResolvedTiles(
                     json=json.load(f))
-
-        with open(topath("apply_lens_tilespecs.json"), 'r') as f:
-            tspecs = [renderapi.tilespec.TileSpec(json=t)
-                      for t in json.load(f)]
 
         renderapi.stack.create_stack(self.args['stack'], render=render)
         renderapi.client.import_tilespecs_parallel(
                 self.args['stack'],
-                tspecs,
-                sharedTransforms=[ref],
+                res.tilespecs,
+                sharedTransforms=res.transforms,
                 render=render)
         renderapi.stack.set_stack_state(
                 self.args['stack'],

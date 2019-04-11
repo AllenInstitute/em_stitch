@@ -1,4 +1,5 @@
 import json
+from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 import os
 import glob
@@ -57,18 +58,25 @@ def plot_ims_and_coords(
     a[1].scatter(q[ind, 0], q[ind, 1], marker='x', color='r')
     a[1].scatter(q[nind, 0], q[nind, 1], marker='x', color='k')
     a[1].set_title(os.path.basename(qname), fontsize=8)
-    return
+    return f, a
 
 
-ddir = '/data/em-131fs3/lctest/T4_07/20190314150250_reference/0'
-ddir = '/data/em-131fs3/lctest/T4_07/20190315112830_reference/0'
-ddir = '/data/em-131fs3/lctest/T4_07/20190315142205_reference/0'
+
+ddir = "/data/em-131fs3/lctest/T6_1/20190328195505_reference/0"
+ddir = "/data/em-131fs3/lctest/T6_1/20190328203101_reference/0"
+ddir = "/data/em-131fs3/lctest/T6_1/20190328204841_reference/0"
 collection = os.path.join(ddir, 'collection.json')
-tform_path = os.path.join(ddir, 'lens_corr_transform.json')
-ddir = '/data/em-131fs3/lctest/T4_06/001931/0'
-collection = os.path.join(ddir, 'match_collection.json')
-tform_path = os.path.join(ddir, 'lens_corr_transform.json')
+
+ddir = '/data/em-131fs3/lctest/T6_20190401_4pctOverlap/000067/0'
+collection = os.path.join(ddir, 'montage_collection.json')
+
+ddir = "/data/em-131fs3/lctest/20190408164246_reference/0"
+collection = os.path.join(ddir, 'collection.json')
+view_all = True
+show = False
+
 tform = None
+tform_path = os.path.join(ddir, 'lens_corr_transform.json')
 if os.path.isfile(tform_path):
     with open(tform_path, 'r') as f:
         tformj = json.load(f)
@@ -87,9 +95,18 @@ if len(sys.argv) > 1:
     except TypeError as e:
         print('not an integer', str(e))
 
-print('using index %d' % ind)
 
-pim, qim, p, q, w, pname, qname = get_ims_and_coords(matches[ind], ddir)
-plot_ims_and_coords(
-        pim, qim, p, q, w, pname=pname, qname=qname, tform=tform, fignum=2)
-plt.show()
+if view_all:
+    inds = range(len(matches))
+else:
+    inds = [ind]
+print('using indices {}'.format(inds))
+
+with PdfPages("view_matches_" + ddir.split('/')[-2] + ".pdf") as pdf:
+    for ind in inds:
+        pim, qim, p, q, w, pname, qname = get_ims_and_coords(matches[ind], ddir)
+        f, a = plot_ims_and_coords(
+                pim, qim, p, q, w, pname=pname, qname=qname, tform=tform, fignum=2)
+        pdf.savefig(f)
+        if show:
+            plt.show()
