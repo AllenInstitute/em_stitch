@@ -19,3 +19,4 @@ script:
 - python setup.py test
 after_success:
 - codecov -t 27ef6fc2-7ebc-4ff5-94c9-58c0c10f26c0
+- "BRANCHES_TO_MERGE_REGEX='develop' BRANCH_TO_MERGE_INTO=master GITHUB_REPO=AllenInstitute/em-lens-correction .travis/merge_script.sh"
