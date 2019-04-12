@@ -1,0 +1,72 @@
+[
+ {
+  "metadata": {
+   "aperture_centroid": null,
+   "autofocus_value": 0.0,
+   "beam_centering": {
+    "beam_center_active": false,
+    "beam_center_changed": false,
+    "offset": [
+     0.0,
+     0.0
+    ]
+   },
+   "calibration": {
+    "lowmag": {
+     "nm_per_pix": 187.5,
+     "x_nm_per_pix": 187.5,
+     "y_nm_per_pix": 187.5,
+     "angle": 128.7
+    },
+    "highmag": {
+     "nm_per_pix": 3.95,
+     "x_nm_per_pix": 3.95,
+     "y_nm_per_pix": 3.95,
+     "angle": 185.0
+    }
+   },
+   "camera_info": {
+    "width": 3840,
+    "height": 3840,
+    "pixel_depth": 1,
+    "camera_bpp": 8,
+    "camera_model": "Ximea CB200MG",
+    "camera_id": "44500428",
+    "exposure": 103125,
+    "gain": 3200
+   },
+   "grid": "20190314112300_reference",
+   "lims_specimen_id": "0674542505",
+   "media": "tape",
+   "media_id": "0147",
+   "montage_settings": {},
+   "notes": "",
+   "objective_focus": 0,
+   "overlap": 0.6,
+   "placement_id": "",
+   "roi_center": [
+    -1258147,
+    -484354
+   ],
+   "roi_creation_time": "20190314112300",
+   "roi_index": 0,
+   "session_id": "T4_06",
+   "server_copy_destination": "//10.128.124.133/share/lctest",
+   "specimen_id": "17797_1R",
+   "temca_id": "temca4",
+   "z_index": ""
+  }
+ },
+ {
+  "data": [
+{"img_path": "20190314112303146_T4_06_20190314112300_reference_0_0_0.tif", "img_meta": {"raster_index": 0, "stage_pos": [-1258147, -484354], "raster_pos": [0, 0], "pixel_size": 3.95, "pixel_size_x_move": 3.95, "pixel_size_y_move": 3.95, "angle": 185.0, "fps": "0.00"}, "focus_score": 24.47515106201172, "astig_score": 0, "astig_angle": 0, "min": 0, "max": 46858, "mean": 33799, "std_dev": 10},
+{"img_path": "20190314112303378_T4_06_20190314112300_reference_0_1_0.tif", "img_meta": {"raster_index": 1, "stage_pos": [-1264191, -484882], "raster_pos": [1, 0], "pixel_size": 3.95, "pixel_size_x_move": 3.95, "pixel_size_y_move": 3.95, "angle": 185.0, "fps": "4.31"}, "focus_score": 23.587377548217773, "astig_score": 0, "astig_angle": 0, "min": 0, "max": 45794, "mean": 33428, "std_dev": 9},
+{"img_path": "20190314112303618_T4_06_20190314112300_reference_0_2_0.tif", "img_meta": {"raster_index": 2, "stage_pos": [-1270235, -485411], "raster_pos": [2, 0], "pixel_size": 3.95, "pixel_size_x_move": 3.95, "pixel_size_y_move": 3.95, "angle": 185.0, "fps": "4.24"}, "focus_score": 23.81517791748047, "astig_score": 0, "astig_angle": 0, "min": 0, "max": 46028, "mean": 33254, "std_dev": 9},
+{"img_path": "20190314112304164_T4_06_20190314112300_reference_0_0_1.tif", "img_meta": {"raster_index": 3, "stage_pos": [-1257618, -490398], "raster_pos": [0, 1], "pixel_size": 3.95, "pixel_size_x_move": 3.95, "pixel_size_y_move": 3.95, "angle": 185.0, "fps": "2.95"}, "focus_score": 24.847524642944336, "astig_score": 0, "astig_angle": 0, "min": 0, "max": 47928, "mean": 33668, "std_dev": 10},
+{"img_path": "20190314112304417_T4_06_20190314112300_reference_0_1_1.tif", "img_meta": {"raster_index": 4, "stage_pos": [-1263662, -490926], "raster_pos": [1, 1], "pixel_size": 3.95, "pixel_size_x_move": 3.95, "pixel_size_y_move": 3.95, "angle": 185.0, "fps": "3.15"}, "focus_score": 24.197561264038086, "astig_score": 0, "astig_angle": 0, "min": 0, "max": 46266, "mean": 33406, "std_dev": 10},
+{"img_path": "20190314112304662_T4_06_20190314112300_reference_0_2_1.tif", "img_meta": {"raster_index": 5, "stage_pos": [-1269706, -491455], "raster_pos": [2, 1], "pixel_size": 3.95, "pixel_size_x_move": 3.95, "pixel_size_y_move": 3.95, "angle": 185.0, "fps": "3.30"}, "focus_score": 24.207387924194336, "astig_score": 0, "astig_angle": 0, "min": 0, "max": 48005, "mean": 33380, "std_dev": 10},
+{"img_path": "20190314112305210_T4_06_20190314112300_reference_0_0_2.tif", "img_meta": {"raster_index": 6, "stage_pos": [-1257089, -496442], "raster_pos": [0, 2], "pixel_size": 3.95, "pixel_size_x_move": 3.95, "pixel_size_y_move": 3.95, "angle": 185.0, "fps": "2.91"}, "focus_score": 24.745929718017578, "astig_score": 0, "astig_angle": 0, "min": 0, "max": 47838, "mean": 33395, "std_dev": 10},
+{"img_path": "20190314112305460_T4_06_20190314112300_reference_0_1_2.tif", "img_meta": {"raster_index": 7, "stage_pos": [-1263134, -496971], "raster_pos": [1, 2], "pixel_size": 3.95, "pixel_size_x_move": 3.95, "pixel_size_y_move": 3.95, "angle": 185.0, "fps": "3.03"}, "focus_score": 24.307188034057617, "astig_score": 0, "astig_angle": 0, "min": 0, "max": 48418, "mean": 33376, "std_dev": 10},
+{"img_path": "20190314112305711_T4_06_20190314112300_reference_0_2_2.tif", "img_meta": {"raster_index": 8, "stage_pos": [-1269178, -497499], "raster_pos": [2, 2], "pixel_size": 3.95, "pixel_size_x_move": 3.95, "pixel_size_y_move": 3.95, "angle": 185.0, "fps": "3.12"}, "focus_score": 24.261816024780273, "astig_score": 0, "astig_angle": 0, "min": 0, "max": 48257, "mean": 33327, "std_dev": 10} ]
+}
+]

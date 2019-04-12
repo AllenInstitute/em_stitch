@@ -1,0 +1,14 @@
+{
+  "data_dir": "{{data_dir}}",
+  "output_dir": "{{output_dir}}",
+  "mask_file": null,
+  "ransac_thresh": 10,
+  "nvertex": 1000,
+  "regularization": {
+      "default_lambda": 1.0,
+      "lens_lambda": 1.0,
+      "translation_factor": 1e-3
+      },
+  "log_level": "INFO",
+  "write_pdf": true
+}
