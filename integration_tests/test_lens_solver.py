@@ -3,7 +3,7 @@ import json
 import pytest
 import os
 import copy
-from lens_correction.lens_correction_solver import (
+from on_scope.lens_correction.lens_correction_solver import (
         LensCorrectionSolver, make_collection_json,
         LensCorrectionException)
 from tempfile import TemporaryDirectory

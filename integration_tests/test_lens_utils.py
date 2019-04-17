@@ -1,4 +1,4 @@
-from lens_correction.utils import (
+from on_scope.lens_correction.utils import (
         maps_from_tform,
         split_inverse_tform,
         src_from_xy,

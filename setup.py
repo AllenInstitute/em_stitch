@@ -15,7 +15,7 @@ class PyTest(TestCommand):
         # import here, cause outside the eggs aren't loaded
         import shlex
         import pytest
-        self.pytest_args += " --cov=lens_correction --cov-report html "\
+        self.pytest_args += " --cov=on_scope --cov-report html "\
                             "--junitxml=test-reports/test.xml " \
                             "--ignore=src"
 
@@ -28,12 +28,12 @@ with open('test_requirements.txt', 'r') as f:
 
 with open('requirements.txt', 'r') as f:
     required = f.read().splitlines()
+print("hacky thing for emaligner dev branch. fix me.")
 for i in range(len(required)):
     if required[i][0:2] == "-e":
         required[i] = "emaligner"
-print(required)
 
-setup(name='lens_correction',
+setup(name='on_scope',
       use_scm_version=True,
       description='a python package for solving affine image registration concurrent '
                   'with a lens correction transform',

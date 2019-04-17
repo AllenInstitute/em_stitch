@@ -1,6 +1,6 @@
 from argschema import ArgSchemaParser
 from .schemas import LensCorrectionSchema
-from .generate_EM_tilespecs_from_metafile import GenerateEMTileSpecsModule
+from ..utils.generate_EM_tilespecs_from_metafile import GenerateEMTileSpecsModule
 from .mesh_and_solve_transform import MeshAndSolveTransform
 from .plots import LensCorrectionPlots
 from . import utils
