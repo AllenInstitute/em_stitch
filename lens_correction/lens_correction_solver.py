@@ -3,7 +3,7 @@ from .schemas import LensCorrectionSchema
 from .generate_EM_tilespecs_from_metafile import GenerateEMTileSpecsModule
 from .mesh_and_solve_transform import MeshAndSolveTransform
 from .plots import LensCorrectionPlots
-from lens_correction import utils
+from . import utils
 import logging
 import os
 import glob
@@ -14,7 +14,7 @@ import cv2
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 example = {
         "data_dir": "/data/em-131fs3/lctest/T4_07/20190315142205_reference/0",
