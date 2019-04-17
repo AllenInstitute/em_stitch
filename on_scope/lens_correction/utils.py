@@ -3,61 +3,11 @@ import cv2
 import renderapi
 import time
 from scipy import ndimage
-import json
 import logging
 from ..utils import utils as common_utils
 
 
 logger = logging.getLogger(__name__)
-
-
-def get_z_from_metafile(metafile):
-    offsets = [
-            {
-              "load": "Tape147",
-              "offset": 100000
-            },
-            {
-              "load": "Tape148",
-              "offset": 110000
-            },
-            {
-              "load": "Tape148B",
-              "offset": 110000
-            },
-            {
-              "load": "Tape148A",
-              "offset": 110000
-            },
-            {
-              "load": "Tape149",
-              "offset": 120000
-            },
-            {
-              "load": "Tape151",
-              "offset": 130000
-            },
-            {
-              "load": "Tape162",
-              "offset": 140000
-            },
-            {
-              "load": "Tape127",
-              "offset": 150000
-            }]
-
-    loads = np.array([i['load'] for i in offsets])
-
-    with open(metafile, 'r') as f:
-        j = json.load(f)
-    try:
-        tape = int(j[0]['metadata']['media_id'])
-        offset = offsets[
-                np.argwhere(loads == 'Tape%d' % tape).flatten()[0]]['offset']
-    except ValueError:
-        offset = 0
-    grid = int(j[0]['metadata']['grid'])
-    return offset + grid
 
 
 def split_inverse_tform(tform, src, block_size):
@@ -82,7 +32,8 @@ def maps_from_tform(tform, width, height, block_size=10000, res=32):
 
     fx = np.arange(0, width)
     fy = np.arange(0, height)
-    src = np.flipud(common_utils.src_from_xy(fx, fy, transpose=False).astype('float32'))
+    src = np.flipud(common_utils.src_from_xy(
+        fx, fy, transpose=False).astype('float32'))
     src[0, :] *= (float(ix.shape[0] - 1) / y.max())
     src[1, :] *= (float(ix.shape[1] - 1) / x.max())
 

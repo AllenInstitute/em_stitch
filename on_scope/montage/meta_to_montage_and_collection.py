@@ -8,7 +8,6 @@ from .utils import pointmatch_filter, get_z_from_metafile
 import json
 import os
 import glob
-import shutil
 
 
 example = {
