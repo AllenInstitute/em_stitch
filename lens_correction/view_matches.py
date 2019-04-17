@@ -7,7 +7,7 @@ import numpy as np
 from meta_to_collection import main
 import sys
 import logging
-from lens_correction.lens_correction_solver import maps_from_tform
+from lens_correction.utils import maps_from_tform
 import renderapi
 import cv2
 
@@ -71,9 +71,10 @@ ddir = '/data/em-131fs3/lctest/T6_20190401_4pctOverlap/000067/0'
 collection = os.path.join(ddir, 'montage_collection.json')
 
 ddir = "/data/em-131fs3/lctest/20190408164246_reference/0"
+ddir = "/data/em-131fs3/lctest/20190412124657_reference/0"
 collection = os.path.join(ddir, 'collection.json')
 view_all = True
-show = False
+show = True
 
 tform = None
 tform_path = os.path.join(ddir, 'lens_corr_transform.json')
