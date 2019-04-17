@@ -54,7 +54,7 @@ def plot_lens_changes(
 
 def plot_residual_histograms(monbase, zr, axes_shape, num=1):
     fig, axes = plt.subplots(
-            axes_shape[0], axes_shape[1] , clear=True,
+            axes_shape[0], axes_shape[1], clear=True,
             num=num, sharex=True, sharey=True)
     bins = np.arange(12)
     iplot = 0
