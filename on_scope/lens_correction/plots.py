@@ -9,7 +9,8 @@ import logging
 import re
 import warnings
 import datetime
-from .utils import estimate_stage_affine, src_from_xy
+from .utils import estimate_stage_affine
+from ..utils.utils import src_from_xy
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 

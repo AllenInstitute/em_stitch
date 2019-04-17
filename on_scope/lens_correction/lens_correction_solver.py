@@ -1,6 +1,7 @@
 from argschema import ArgSchemaParser
 from .schemas import LensCorrectionSchema
 from ..utils.generate_EM_tilespecs_from_metafile import GenerateEMTileSpecsModule
+from ..utils import utils as common_utils
 from .mesh_and_solve_transform import MeshAndSolveTransform
 from .plots import LensCorrectionPlots
 from . import utils
@@ -87,7 +88,7 @@ def make_collection_json(
         ind = np.arange(len(m['matches']['p'][0]))
         counts[-1]['n_from_gpu'] = ind.size
 
-        _, _, w, _ = utils.pointmatch_filter(
+        _, _, w, _ = common_utils.pointmatch_filter(
                 m,
                 n_clusters=None,
                 n_cluster_pts=20,
