@@ -585,6 +585,11 @@ class MeshAndSolveTransform(ArgSchemaParser):
                     tbbox[i, 0], tbbox[i, 1])
         self.logger.info(bstr)
 
+        self.tfpath = os.path.join(
+                self.args['output_dir'], self.args['outfile'])
+        jsongz.dump(
+                self.new_ref_transform.to_dict(), self.tfpath, compress=False)
+
         new_tilespecs = new_specs_with_tf(
             self.new_ref_transform,
             self.tilespecs,

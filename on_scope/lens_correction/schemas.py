@@ -4,7 +4,7 @@ from argschema import ArgSchema
 from argschema.schemas import DefaultSchema
 from argschema.fields import (
         Boolean, InputDir, InputFile, Float, List,
-        Int, OutputDir, Nested)
+        Int, OutputDir, Nested, Str)
 warnings.simplefilter(
         action='ignore',
         category=ChangedInMarshmallow3Warning)
@@ -65,6 +65,11 @@ class MeshLensCorrectionSchema(ArgSchema):
     output_dir = OutputDir(
         required=False,
         description="directory for output files")
+    outfile = Str(
+        required=True,
+        missing="tmp_transform_out.json",
+        description=("File to which json output of lens correction "
+                     "(leaf TransformSpec) is written"))
     compress_output = Boolean(
         required=False,
         missing=True,
