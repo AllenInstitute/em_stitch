@@ -16,7 +16,8 @@ class PyTest(TestCommand):
         import shlex
         import pytest
         self.pytest_args += " --cov=lens_correction --cov-report html "\
-                            "--junitxml=test-reports/test.xml"
+                            "--junitxml=test-reports/test.xml " \
+                            "--ignore=src"
 
         errno = pytest.main(shlex.split(self.pytest_args))
         sys.exit(errno)
@@ -27,6 +28,10 @@ with open('test_requirements.txt', 'r') as f:
 
 with open('requirements.txt', 'r') as f:
     required = f.read().splitlines()
+for i in range(len(required)):
+    if required[i][0:2] == "-e":
+        required[i] = "emaligner"
+print(required)
 
 setup(name='lens_correction',
       use_scm_version=True,
