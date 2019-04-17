@@ -8,13 +8,13 @@ from scipy.sparse.linalg import factorized
 import renderapi
 import copy
 import os
-import json
 import datetime
 import cv2
 from six.moves import urllib
 from argschema import ArgSchemaParser
 from .schemas import MeshLensCorrectionSchema
 from .utils import remove_weighted_matches
+from EMaligner import jsongz
 import logging
 
 # this is a modification of https://github.com/
@@ -273,7 +273,6 @@ def new_specs_with_tf(ref_transform, tilespecs, transforms):
                                    renderapi.transform.ReferenceTransform(
                                     refId=ref_transform.transformId))
         newspecs[-1].tforms[1] = transforms[i]
-
     return newspecs
 
 
@@ -307,14 +306,9 @@ def report_solution(errx, erry, transforms, criteria):
     jresult['y_res_max'] = erry.max()
     jresult['y_res_mean'] = erry.mean()
     jresult['y_res_std'] = erry.std()
-    jresult['x_trans_min'] = translation[:, 0].min()
-    jresult['x_trans_max'] = translation[:, 0].max()
-    jresult['x_trans_mean'] = translation[:, 0].mean()
-    jresult['x_trans_std'] = translation[:, 0].std()
-    jresult['y_trans_min'] = translation[:, 1].min()
-    jresult['y_trans_max'] = translation[:, 1].max()
-    jresult['y_trans_mean'] = translation[:, 1].mean()
-    jresult['y_trans_std'] = translation[:, 1].std()
+
+    for k in jresult.keys():
+        jresult[k] = np.round(jresult[k], 3)
 
     message = 'lens solver results [px]'
     for val in ['res']:
@@ -461,13 +455,11 @@ class MeshAndSolveTransform(ArgSchemaParser):
     default_schema = MeshLensCorrectionSchema
 
     def run(self):
-        with open(self.args['tilespec_file'], 'r') as f:
-            jspecs = json.load(f)
+        jspecs = jsongz.load(self.args['tilespec_file'])
         self.tilespecs = np.array([
                 renderapi.tilespec.TileSpec(json=j) for j in jspecs])
 
-        with open(self.args['match_file'], 'r') as f:
-            self.matches = json.load(f)
+        self.matches = jsongz.load(self.args['match_file'])
 
         remove_weighted_matches(self.matches, weight=0.0)
 
@@ -576,13 +568,6 @@ class MeshAndSolveTransform(ArgSchemaParser):
 
         self.logger.debug(self.solve_message)
 
-        jresult_path = os.path.join(
-                self.args['output_dir'],
-                'solver_summary.json')
-
-        with open(jresult_path, 'w') as f:
-            json.dump(jresult, f, indent=2)
-
         self.new_ref_transform = create_thinplatespline_tf(
                 self.args,
                 self.mesh,
@@ -600,13 +585,6 @@ class MeshAndSolveTransform(ArgSchemaParser):
                     tbbox[i, 0], tbbox[i, 1])
         self.logger.info(bstr)
 
-        tfpath = os.path.join(
-                self.args['output_dir'],
-                self.args['outfile'])
-        with open(tfpath, 'w') as f:
-            json.dump(self.new_ref_transform.to_dict(), f, indent=2)
-        self.logger.info(" wrote new transform:\n  %s" % tfpath)
-
         new_tilespecs = new_specs_with_tf(
             self.new_ref_transform,
             self.tilespecs,
@@ -621,11 +599,27 @@ class MeshAndSolveTransform(ArgSchemaParser):
         self.logger.info(sastr)
 
         new_path = os.path.join(
-                os.path.dirname(self.args['tilespec_file']),
-                'solved_tilespecs.json')
+                self.args['output_dir'],
+                'resolvedtiles.json')
 
-        with open(new_path, 'w') as f:
-            json.dump([t.to_dict() for t in new_tilespecs], f, indent=2)
-        self.logger.info(" wrote solved tilespecs:\n  %s" % new_path)
+        resolved = renderapi.resolvedtiles.ResolvedTiles(
+                tilespecs=new_tilespecs,
+                transformList=[self.new_ref_transform])
+
+        new_path = jsongz.dump(
+                resolved.to_dict(),
+                new_path,
+                compress=self.args['compress_output'])
+
+        self.args['output_json'] = os.path.join(
+                self.args['output_dir'],
+                'output.json')
+
+        jresult['resolved_tiles'] = os.path.abspath(new_path)
+
+        self.output(jresult, indent=2)
+
+        self.logger.info(" wrote solved tilespecs:\n  %s" %
+                         self.args['output_json'])
 
         return

@@ -3,7 +3,7 @@ from marshmallow.warnings import ChangedInMarshmallow3Warning
 from argschema import ArgSchema
 from argschema.fields import (
         InputDir, InputFile, Float,
-        Int, OutputFile, Str)
+        Int, OutputFile, Str, Boolean)
 warnings.simplefilter(
         action='ignore',
         category=ChangedInMarshmallow3Warning)
@@ -41,3 +41,8 @@ class GenerateEMTileSpecsParameters(ArgSchema):
     output_path = OutputFile(
         required=False,
         description="directory for output files")
+    compress_output = Boolean(
+        required=False,
+        missing=True,
+        default=True,
+        description=("tilespecs will be .json or .json.gz"))

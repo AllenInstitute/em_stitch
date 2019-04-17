@@ -1,48 +1,13 @@
 import warnings
 from marshmallow.warnings import ChangedInMarshmallow3Warning
-import argschema
 from argschema import ArgSchema
 from argschema.schemas import DefaultSchema
 from argschema.fields import (
         Boolean, InputDir, InputFile, Float, List,
-        Int, OutputFile, OutputDir, Str, Nested)
+        Int, OutputDir, Nested)
 warnings.simplefilter(
         action='ignore',
         category=ChangedInMarshmallow3Warning)
-
-
-class GenerateEMTileSpecsParameters(ArgSchema):
-    metafile = InputFile(
-        required=True,
-        description="metadata file containing TEMCA acquisition data")
-    maskUrl = InputFile(
-        required=False,
-        default=None,
-        missing=None,
-        description="absolute path to image mask to apply")
-    image_directory = InputDir(
-        required=False,
-        description=("directory used in determining absolute paths to images. "
-                     "Defaults to parent directory containing metafile "
-                     "if omitted."))
-    maximum_intensity = Int(
-        required=False, default=255,
-        description=("intensity value to interpret as white"))
-    minimum_intensity = Int(
-        required=False, default=0,
-        description=("intensity value to interpret as black"))
-    z = Float(
-        required=False,
-        default=0,
-        description=("z value"))
-    sectionId = Str(
-        required=False,
-        description=("sectionId to apply to tiles during ingest.  "
-                     "If unspecified will default to a string "
-                     "representation of the float value of z_index."))
-    output_path = OutputFile(
-        required=False,
-        description="directory for output files")
 
 
 class regularization(DefaultSchema):
@@ -95,16 +60,16 @@ class MeshLensCorrectionSchema(ArgSchema):
         required=True,
         missing="",
         description="json of matches")
-    outfile = Str(
-        required=True,
-        missing="tmp_transform_out.json",
-        description=("File to which json output of lens correction "
-                     "(leaf TransformSpec) is written"))
     regularization = Nested(regularization, missing={})
     good_solve = Nested(good_solve_criteria, missing={})
     output_dir = OutputDir(
         required=False,
         description="directory for output files")
+    compress_output = Boolean(
+        required=False,
+        missing=True,
+        default=True,
+        description=("tilespecs will be .json or .json.gz"))
 
 
 class LensCorrectionSchema(ArgSchema):
@@ -131,11 +96,6 @@ class LensCorrectionSchema(ArgSchema):
         description="ransac outlier threshold")
     regularization = Nested(regularization, missing={})
     good_solve = Nested(good_solve_criteria, missing={})
-    write_pdf = Boolean(
-        required=True,
-        missing=False,
-        default=False,
-        description="output pdf plots (was slow on windows)")
     ignore_match_indices = List(
         Int,
         required=False,
@@ -143,92 +103,8 @@ class LensCorrectionSchema(ArgSchema):
         missing=None,
         description=("debug feature for ignoring certain indices"
                      " of the match collection"))
-
-
-class MetaToMontageAndCollectionSchema(ArgSchema):
-    data_dir = InputDir(
-        required=True,
-        description="directory containing metafile, images, and matches")
-    output_dir = OutputDir(
-        required=False,
-        description="directory for output files")
-    read_transform_from_meta = Boolean(
+    compress_output = Boolean(
         required=False,
         missing=True,
         default=True,
-        description="read lens correction transform from metafile")
-    ref_transform = InputFile(
-        required=False,
-        missing=None,
-        default=None,
-        description="transform json")
-    ransacReprojThreshold = Float(
-        required=False,
-        missing=10.0,
-        default=10.0,
-        description=("passed into cv2.estimateAffinePartial2D()"
-                     "for RANSAC filtering of montage template matches"))
-
-
-class RenderClientParameters(argschema.schemas.DefaultSchema):
-    host = argschema.fields.Str(
-        required=True, description='render host')
-    port = argschema.fields.Int(
-        required=True, description='render post integer')
-    owner = argschema.fields.Str(
-        required=True, description='render default owner')
-    project = argschema.fields.Str(
-        required=True, description='render default project')
-    client_scripts = argschema.fields.Str(
-        required=True, description='path to render client scripts')
-    memGB = argschema.fields.Str(
-        required=False, default='5G',
-        description='string describing java heap memory (default 5G)')
-
-
-class UploadToRenderSchema(ArgSchema):
-    render = argschema.fields.Nested(
-        RenderClientParameters,
-        required=True,
-        description="parameters to connect to render server")
-    data_dir = InputDir(
-        required=True,
-        description="directory containing metafile, images, and matches")
-    stack = Str(
-        required=True,
-        description="stack name")
-    collection = Str(
-        required=True,
-        description="collection name")
-
-
-class MontagePlotsSchema(ArgSchema):
-    render = argschema.fields.Nested(
-        RenderClientParameters,
-        required=True,
-        description="parameters to connect to render server")
-    output_dir = OutputDir(
-        required=True,
-        description="directory containing metafile, images, and matches")
-    stack = Str(
-        required=True,
-        description="stack name")
-    collection = Str(
-        required=True,
-        description="collection name")
-    sectionId = Str(
-        required=True,
-        description='sectionId/groupId')
-    z = Int(
-        required=True,
-        description='z value in stack')
-    make_plot = Boolean(
-        required=True,
-        default=True,
-        missing=True,
-        description="make the plot and save it")
-    save_json = Boolean(
-        required=True,
-        default=True,
-        missing=True,
-        description="save the json of the residuals")
+        description=("tilespecs will be .json or .json.gz"))

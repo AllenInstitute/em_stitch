@@ -3,6 +3,7 @@ import os
 import json
 import numpy
 import pathlib
+from EMaligner import jsongz
 from argschema import ArgSchemaParser
 from .schemas import GenerateEMTileSpecsParameters
 
@@ -63,7 +64,6 @@ class GenerateEMTileSpecsModule(ArgSchemaParser):
             rotation=imgdata['img_meta']['angle'], pixelsize=pixelsize)
 
     def run(self):
-        print(self.args['metafile'])
         with open(self.args['metafile'], 'r') as f:
             meta = json.load(f)
         roidata = meta[0]['metadata']
@@ -102,10 +102,10 @@ class GenerateEMTileSpecsModule(ArgSchemaParser):
                     pixelsize=pixelsize,
                     maskUrl=self.args['maskUrl']) for img in imgdata]
 
-        print(self.args['output_path'])
-
-        with open(self.args['output_path'], 'w') as f:
-            json.dump(self.tilespecs, f, indent=2)
+        self.args['output_path'] = jsongz.dump(
+                self.tilespecs,
+                self.args['output_path'],
+                self.args['compress_output'])
 
     @property
     def tilespecs(self):

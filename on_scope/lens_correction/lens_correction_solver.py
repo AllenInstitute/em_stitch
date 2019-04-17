@@ -4,8 +4,8 @@ from ..utils.generate_EM_tilespecs_from_metafile import \
         GenerateEMTileSpecsModule
 from ..utils import utils as common_utils
 from .mesh_and_solve_transform import MeshAndSolveTransform
-from .plots import LensCorrectionPlots
 from . import utils
+from EMaligner import jsongz
 import logging
 import os
 import glob
@@ -38,9 +38,6 @@ class LensCorrectionException(Exception):
     pass
 
 
-# trivial change
-
-
 def one_file(fdir, fstub):
     fullstub = os.path.join(fdir, fstub)
     files = glob.glob(fullstub)
@@ -54,7 +51,7 @@ def one_file(fdir, fstub):
 
 
 def tilespec_input_from_metafile(
-        metafile, mask_file, output_dir, log_level):
+        metafile, mask_file, output_dir, log_level, compress):
     result = {}
     result['metafile'] = metafile
 
@@ -69,6 +66,7 @@ def tilespec_input_from_metafile(
     result['maskUrl'] = mask_file
     result['output_path'] = os.path.join(output_dir, 'raw_tilespecs.json')
     result['log_level'] = log_level
+    result['compress_output'] = compress
     return result
 
 
@@ -76,13 +74,12 @@ def make_collection_json(
         template_file,
         output_dir,
         thresh,
+        compress,
         ignore_match_indices=None):
 
     with open(template_file, 'r') as f:
         matches = json.load(f)
-    collection_file = os.path.join(
-            output_dir,
-            "collection.json")
+
     counts = []
     for m in matches['collection']:
         counts.append({})
@@ -107,8 +104,8 @@ def make_collection_json(
              if i not in ignore_match_indices]
         logger.warning("you are ignoring some point matches")
 
-    with open(collection_file, 'w') as f:
-        json.dump(m, f)
+    collection_file = os.path.join(output_dir, "collection.json")
+    collection_file = jsongz.dump(m, collection_file, compress=compress)
 
     return collection_file, counts
 
@@ -132,18 +129,20 @@ class LensCorrectionSolver(ArgSchemaParser):
                 self.metafile,
                 self.args['mask_file'],
                 self.output_dir,
-                self.args['log_level'])
+                self.args['log_level'],
+                self.args['compress_output'])
         gentspecs = GenerateEMTileSpecsModule(input_data=tspecin, args=[])
         gentspecs.run()
 
-        assert os.path.isfile(tspecin['output_path'])
+        assert os.path.isfile(gentspecs.args['output_path'])
         self.logger.info(
-                "raw tilespecs written:\n  %s" % tspecin['output_path'])
+                "raw tilespecs written:\n  %s" % gentspecs.args['output_path'])
 
         collection_path, self.filter_counts = make_collection_json(
                 self.matchfile,
                 self.output_dir,
                 self.args['ransac_thresh'],
+                self.args['compress_output'],
                 self.args['ignore_match_indices'])
 
         self.n_from_gpu = np.array(
@@ -162,40 +161,49 @@ class LensCorrectionSolver(ArgSchemaParser):
                 'nvertex': self.args['nvertex'],
                 'regularization': self.args['regularization'],
                 'good_solve': self.args['good_solve'],
-                'tilespec_file': tspecin['output_path'],
+                'tilespec_file': gentspecs.args['output_path'],
                 'match_file': collection_path,
                 'output_dir': self.output_dir,
-                'outfile': 'lens_correction_transform.json',
+                'compress_output': self.args['compress_output'],
                 'log_level': self.args['log_level']}
 
         self.solver = MeshAndSolveTransform(input_data=solver_args, args=[])
         self.solver.run()
 
-        with open(tspecin['output_path'], 'r') as f:
-            jtspecs = json.load(f)
+        with open(self.solver.args['output_json'], 'r') as f:
+            j = json.load(f)
+        resolved_path = j['resolved_tiles']
 
-        with open(
-                os.path.join(
-                    self.output_dir,
-                    solver_args['outfile']), 'r') as f:
-            self.jtform = json.load(f)
+        resolvedtiles = renderapi.resolvedtiles.ResolvedTiles(
+                json=jsongz.load(resolved_path))
 
-        rspec = renderapi.tilespec.TileSpec(json=jtspecs[0])
+        self.jtform = resolvedtiles.transforms[0].to_dict()
 
         self.map1, self.map2, self.mask = utils.maps_from_tform(
                 renderapi.transform.ThinPlateSplineTransform(
                     json=self.jtform),
-                rspec.width,
-                rspec.height,
+                resolvedtiles.tilespecs[0].width,
+                resolvedtiles.tilespecs[0].height,
                 res=32)
 
         maskname = os.path.join(self.output_dir, 'mask.png')
         cv2.imwrite(maskname, self.mask)
         self.logger.info("wrote:\n  %s" % maskname)
 
-        if self.args['write_pdf']:
-            plts = LensCorrectionPlots(self.args['data_dir'], self.output_dir)
-            plts.make_all_plots(pdfdir='from_files', show=False)
+        res = {}
+        res['input'] = {}
+        res['input']['template'] = os.path.abspath(self.matchfile)
+        res['input']['metafile'] = os.path.abspath(self.metafile)
+        res['output'] = {}
+        res['output']['resolved_tiles'] = j.pop('resolved_tiles')
+        res['output']['mask'] = os.path.abspath(maskname)
+        res['output']['collection'] = os.path.abspath(collection_path)
+        res['residual stats'] = j
+
+        self.args['output_json'] = self.solver.args['output_json']
+
+        with open(self.args['output_json'], 'w') as f:
+            json.dump(res, f, indent=2)
 
     def check_for_files(self):
         self.metafile = one_file(self.args['data_dir'], '_metadata*')
