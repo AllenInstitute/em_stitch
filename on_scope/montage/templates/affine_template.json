@@ -2,22 +2,16 @@
   "log_level": "INFO",
   "input_stack": {
     "db_interface": "file",
-    "input_file": "to fill",
-    "host": "",
-    "name": ""
+    "input_file": "to fill"
   },
   "pointmatch": {
     "db_interface": "file",
-    "input_file": "to fill",
-    "host": "",
-    "name": ""
+    "input_file": "to fill"
   },
   "output_stack": {
     "db_interface": "file",
     "output_file": "to fill",
-    "compress_output": true,
-    "host": "",
-    "name": ""
+    "compress_output": true
   },
   "first_section": 1,
   "last_section": 1,
