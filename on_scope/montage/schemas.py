@@ -1,9 +1,9 @@
 import warnings
 from marshmallow.warnings import ChangedInMarshmallow3Warning
-from marshmallow import post_load, ValidationError
+import marshmallow as mm
 from argschema import ArgSchema
 from argschema.fields import (
-        Boolean, InputDir, InputFile, Float, OutputDir, List, Str)
+        Boolean, InputDir, InputFile, Float, OutputDir, List, Str, Dict)
 import os
 warnings.simplefilter(
         action='ignore',
@@ -19,16 +19,21 @@ class MontageSolverSchema(ArgSchema):
         missing=None,
         default=None,
         description="directory for output files")
-    read_transform_from_meta = Boolean(
+    read_transform_from = Str(
         required=False,
-        missing=True,
-        default=True,
-        description="read lens correction transform from metafile")
+        missing='metafile',
+        default='metafile',
+        validator=mm.validate.OneOf(['metafile', 'reffile', 'dict']),
+        description="3 possible ways to read in the reference transform")
     ref_transform = InputFile(
         required=False,
         missing=None,
         default=None,
         description="transform json")
+    ref_transform_dict = Dict(
+        require=False,
+        missing=None,
+        description="transform in from memory")
     ransacReprojThreshold = Float(
         required=False,
         missing=10.0,
@@ -48,10 +53,10 @@ class MontageSolverSchema(ArgSchema):
         required=True,
         description="location of the templates for the solver")
 
-    @post_load
+    @mm.post_load
     def check_solver_inputs(self, data):
         for args in data['solver_templates']:
             argpath = os.path.join(data['solver_template_dir'], args)
             if not os.path.isfile(argpath):
-                raise ValidationError(
+                raise mm.ValidationError(
                         "solver arg file doesn't exist: %s" % argpath)
