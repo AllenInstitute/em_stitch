@@ -13,7 +13,7 @@ import glob
 
 dname = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
-            "templates")
+            "../", "../", "integration_tests", "test_files")
 
 example = {
         "data_dir": "/data/em-131fs3/lctest/T4_6/001844/0",
@@ -56,6 +56,8 @@ def do_solve(template_path, args, index):
     # and matches to calculate residuals, costing more time
     res = {
             'args': template_path,
+            'output': aligner.args['output_stack']['output_file'],
+            'collection': aligner.args['pointmatch']['input_file'],
             'x': {
                 'mean': aligner.results['err'][0][0],
                 'stdev': aligner.results['err'][0][1]
@@ -212,8 +214,9 @@ class MontageSolver(ArgSchemaParser):
                 self.args['compress_output'],
                 templates)
 
-        rjson = os.path.join(self.args['output_dir'], 'montage_results.json')
-        with open(rjson, 'w') as f:
+        self.args['output_json'] = os.path.join(
+                self.args['output_dir'], 'montage_results.json')
+        with open(self.args['output_json'], 'w') as f:
             json.dump(self.results, f, indent=2)
 
 
