@@ -12,22 +12,28 @@ import os
 import glob
 import copy
 import time
+import numpy as np
 
+dname = os.path.dirname(os.path.abspath(__file__))
 
 example = {
         "data_dir": "/data/em-131fs3/lctest/T4_6/001844/0",
         "output_dir": "/data/em-131fs3/lctest/T4_6/001844/0",
         "ref_transform": None,
-        "ransacReprojThreshold": 10
+        "ransacReprojThreshold": 10,
+        "solver_input_args": [
+            os.path.join(dname, "templates", "affine_template.json"),
+            os.path.join(dname, "templates", "polynomial_template.json"),
+            ]
         }
 
-dname = os.path.dirname(os.path.abspath(__file__))
-montage_template = os.path.join(
-        dname, 'templates', 'montage_template.json')
+
+class MontageSolverException(Exception):
+    pass
 
 
-def do_solve(args, transform, outname, lam):
-    with open(montage_template, 'r') as f:
+def do_solve(template_path, args, index):
+    with open(template_path, 'r') as f:
         template = json.load(f)
     template['input_stack']['input_file'] = \
         args['input_stack']['input_file']
@@ -37,33 +43,47 @@ def do_solve(args, transform, outname, lam):
         args['output_stack']['compress_output']
     template['first_section'] = template['last_section'] = \
         args['first_section']
-    template['transformation'] = transform
-    template['regularization']['default_lambda'] = lam
-    template['output_stack']['output_file'] = os.path.join(
+    fname = os.path.join(
             os.path.dirname(args['input_stack']['input_file']),
-            outname)
+            'resolvedtiles_%s_%d.json' % (template['transformation'], index))
+    template['output_stack']['output_file'] = fname
+    template['fullsize_transform'] = False
     aligner = ema.EMaligner(input_data=template, args=[])
     aligner.run()
+    # these numbers only meaningful for fullsize_transform = False
+    # to get results already in memory, on-scope, let's keep it that way
+    # otherwise, we'll need a separate calculation that loads tilespecs
+    # and matches to calculate residuals, costing more time
+    res = {
+            'args': template_path,
+            'x': {
+                'mean': aligner.results['err'][0][0],
+                'stdev': aligner.results['err'][0][1]
+                },
+            'y': {
+                'mean': aligner.results['err'][1][0],
+                'stdev': aligner.results['err'][1][1]
+                },
+            'mag': {
+                'mean': aligner.results['mag'][0],
+                'stdev': aligner.results['mag'][1]
+                }
+            }
+    return res
 
 
-def do_solves(collection, input_stack, z, compress):
+def do_solves(collection, input_stack, z, compress, solver_args):
     args = {'input_stack': {}, 'output_stack': {}, 'pointmatch': {}}
     args['input_stack']['input_file'] = input_stack
     args['pointmatch']['input_file'] = collection
     args['output_stack']['compress_output'] = compress
     args['first_section'] = args['last_section'] = z
 
-    do_solve(
-            copy.deepcopy(args),
-            'AffineModel',
-            'resolved_output_tiles_affine.json',
-            5e5)
+    results = []
+    for index, template in enumerate(solver_args):
+        results.append(do_solve(template, args, index))
 
-    do_solve(
-            copy.deepcopy(args),
-            'Polynomial2DTransform',
-            'resolved_output_tiles_poly.json',
-            1000)
+    return results
 
 
 def check_failed_from_metafile(metafile):
@@ -132,7 +152,7 @@ def make_resolved(rawspecpath, tform, outputdir, compress):
             transformList=[tform])
 
     # write it to file and return the path
-    rpath = os.path.join(outputdir, 'resolved_input_tiles.json')
+    rpath = os.path.join(outputdir, 'resolvedtiles_input.json')
 
     return jsongz.dump(resolved.to_dict(), rpath, compress)
 
@@ -180,11 +200,12 @@ class MontageSolver(ArgSchemaParser):
                 self.args['output_dir'],
                 self.args['compress_output'])
 
-        do_solves(
+        self.results = do_solves(
                 collection,
                 input_stack_path,
                 z,
-                self.args['compress_output'])
+                self.args['compress_output'],
+                self.args['solver_input_args'])
 
 
 if __name__ == "__main__":

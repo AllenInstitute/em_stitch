@@ -1,8 +1,9 @@
 import warnings
 from marshmallow.warnings import ChangedInMarshmallow3Warning
+from marshmallow import post_load, ValidationError
 from argschema import ArgSchema
 from argschema.fields import (
-        Boolean, InputDir, InputFile, Float, OutputDir)
+        Boolean, InputDir, InputFile, Float, OutputDir, List)
 warnings.simplefilter(
         action='ignore',
         category=ChangedInMarshmallow3Warning)
@@ -38,3 +39,7 @@ class MontageSolverSchema(ArgSchema):
         missing=True,
         default=True,
         description=("tilespecs will be .json or .json.gz"))
+    solver_input_args = List(
+        InputFile,
+        required=True,
+        description="input jsons that can be used as solver args")
