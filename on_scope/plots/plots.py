@@ -161,15 +161,15 @@ class LensCorrectionPlots():
         figs += self.data_coverage(show_residuals=True)
 
         if pdfdir is not None:
-            pltfilename = os.path.join(
+            self.pltfilename = os.path.join(
                     pdfdir,
                     "lens_corr_plots.pdf")
-            pdf = PdfPages(pltfilename)
+            pdf = PdfPages(self.pltfilename)
             for f in figs:
                 pdf.savefig(f)
                 plt.close(f)
             pdf.close()
-            self.logger.info('wrote \n  %s' % pltfilename)
+            self.logger.info('wrote \n  %s' % self.pltfilename)
 
     def get_file(self, fdir, fstr, return_dir=False):
         fname = os.path.join(

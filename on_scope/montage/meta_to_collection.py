@@ -183,10 +183,10 @@ class MetaToCollection(object):
                             }
                         })
 
-        with open(args.output_file, 'w') as f:
-            json.dump(samples, f, indent=2)
+        #with open(args.output_file, 'w') as f:
+        #    json.dump(samples, f, indent=2)
 
-        return
+        return samples
 
 
 def main(args):
@@ -211,7 +211,7 @@ def main(args):
     args = parent_parser.parse_args(args)
 
     m2c = MetaToCollection()
-    m2c.process(args)
+    return m2c.process(args)
 
 
 if __name__ == "__main__":
