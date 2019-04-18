@@ -1,29 +1,29 @@
 from argschema import ArgSchemaParser
 import renderapi
-from .meta_to_collection import main as mtc_main
-from .schemas import MontageSolverSchema
-from ..utils.generate_EM_tilespecs_from_metafile import \
+from on_scope.montage import meta_to_collection
+from on_scope.montage.schemas import MontageSolverSchema
+from on_scope.utils.generate_EM_tilespecs_from_metafile import \
         GenerateEMTileSpecsModule
-from ..utils.utils import pointmatch_filter, get_z_from_metafile
+from on_scope.utils.utils import pointmatch_filter, get_z_from_metafile
 from EMaligner import jsongz
 import EMaligner.EMaligner as ema
 import json
 import os
 import glob
-import copy
-import time
-import numpy as np
 
-dname = os.path.dirname(os.path.abspath(__file__))
+dname = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "templates")
 
 example = {
         "data_dir": "/data/em-131fs3/lctest/T4_6/001844/0",
         "output_dir": "/data/em-131fs3/lctest/T4_6/001844/0",
         "ref_transform": None,
         "ransacReprojThreshold": 10,
-        "solver_input_args": [
-            os.path.join(dname, "templates", "affine_template.json"),
-            os.path.join(dname, "templates", "polynomial_template.json"),
+        "solver_template_dir": dname,
+        "solver_templates": [
+            "affine_template.json",
+            "polynomial_template.json",
             ]
         }
 
@@ -165,7 +165,7 @@ class MontageSolver(ArgSchemaParser):
             self.args['output_dir'] = self.args['data_dir']
 
         # read the matches from the metafile
-        matches = mtc_main([self.args['data_dir']])
+        matches = meta_to_collection.main([self.args['data_dir']])
 
         montage_filter_matches(
                 matches,
@@ -200,16 +200,20 @@ class MontageSolver(ArgSchemaParser):
                 self.args['output_dir'],
                 self.args['compress_output'])
 
+        templates = [os.path.join(self.args['solver_template_dir'], t)
+                     for t in self.args['solver_templates']]
         self.results = do_solves(
                 collection,
                 input_stack_path,
                 z,
                 self.args['compress_output'],
-                self.args['solver_input_args'])
+                templates)
+
+        rjson = os.path.join(self.args['output_dir'], 'montage_results.json')
+        with open(rjson, 'w') as f:
+            json.dump(self.results, f, indent=2)
 
 
 if __name__ == "__main__":
-    t0 = time.time()
     mm = MontageSolver(input_data=example)
     mm.run()
-    print('total time %0.1f sec' % (time.time() - t0))

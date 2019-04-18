@@ -3,7 +3,8 @@ from marshmallow.warnings import ChangedInMarshmallow3Warning
 from marshmallow import post_load, ValidationError
 from argschema import ArgSchema
 from argschema.fields import (
-        Boolean, InputDir, InputFile, Float, OutputDir, List)
+        Boolean, InputDir, InputFile, Float, OutputDir, List, Str)
+import os
 warnings.simplefilter(
         action='ignore',
         category=ChangedInMarshmallow3Warning)
@@ -39,7 +40,18 @@ class MontageSolverSchema(ArgSchema):
         missing=True,
         default=True,
         description=("tilespecs will be .json or .json.gz"))
-    solver_input_args = List(
-        InputFile,
+    solver_templates = List(
+        Str,
         required=True,
-        description="input jsons that can be used as solver args")
+        description="input json basenames for the solver args")
+    solver_template_dir = InputDir(
+        required=True,
+        description="location of the templates for the solver")
+
+    @post_load
+    def check_solver_inputs(self, data):
+        for args in data['solver_templates']:
+            argpath = os.path.join(data['solver_template_dir'], args)
+            if not os.path.isfile(argpath):
+                raise ValidationError(
+                        "solver arg file doesn't exist: %s" % argpath)
