@@ -9,7 +9,8 @@ import logging
 import re
 import warnings
 import datetime
-from .utils import estimate_stage_affine, src_from_xy
+from .utils import estimate_stage_affine
+from ..utils.utils import src_from_xy
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
@@ -53,7 +54,7 @@ def plot_lens_changes(
 
 def plot_residual_histograms(monbase, zr, axes_shape, num=1):
     fig, axes = plt.subplots(
-            axes_shape[0], axes_shape[1] , clear=True,
+            axes_shape[0], axes_shape[1], clear=True,
             num=num, sharex=True, sharey=True)
     bins = np.arange(12)
     iplot = 0
@@ -160,15 +161,15 @@ class LensCorrectionPlots():
         figs += self.data_coverage(show_residuals=True)
 
         if pdfdir is not None:
-            pltfilename = os.path.join(
+            self.pltfilename = os.path.join(
                     pdfdir,
                     "lens_corr_plots.pdf")
-            pdf = PdfPages(pltfilename)
+            pdf = PdfPages(self.pltfilename)
             for f in figs:
                 pdf.savefig(f)
                 plt.close(f)
             pdf.close()
-            self.logger.info('wrote \n  %s' % pltfilename)
+            self.logger.info('wrote \n  %s' % self.pltfilename)
 
     def get_file(self, fdir, fstr, return_dir=False):
         fname = os.path.join(
