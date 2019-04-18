@@ -214,7 +214,8 @@ class MontageSolver(ArgSchemaParser):
                 self.args['compress_output'],
                 templates)
 
-        self.args['output_json'] = os.path.join(self.args['output_dir'], 'montage_results.json')
+        self.args['output_json'] = os.path.join(
+                self.args['output_dir'], 'montage_results.json')
         with open(self.args['output_json'], 'w') as f:
             json.dump(self.results, f, indent=2)
 
