@@ -121,14 +121,16 @@ def make_raw_tilespecs(metafile, outputdir, groupId, compress):
     return gmod.args['output_path'], z
 
 
-def get_transform(metafile, tfpath, from_meta):
-    if from_meta:
+def get_transform(metafile, tfpath, refdict, read_from):
+    if read_from == 'metafile':
         with open(metafile, 'r') as f:
             j = json.load(f)
         tfj = j[2]['sharedTransform']
-    else:
+    elif read_from == 'reffile':
         with open(tfpath, 'r') as f:
             tfj = json.load(f)
+    elif read_from == 'dict':
+        tfj = refdict
     return renderapi.transform.Transform(json=tfj)
 
 
@@ -191,7 +193,8 @@ class MontageSolver(ArgSchemaParser):
         tform = get_transform(
                 metafile,
                 self.args['ref_transform'],
-                self.args['read_transform_from_meta'])
+                self.args['ref_transform_dict'],
+                self.args['read_transform_from'])
 
         # make a resolved tile object
         input_stack_path = make_resolved(
