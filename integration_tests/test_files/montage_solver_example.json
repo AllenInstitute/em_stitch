@@ -1,0 +1,11 @@
+{
+  "data_dir": "{{data_dir}}",
+  "output_dir": "{{output_dir}}",
+  "ref_transform": null,
+  "ransacReprojThreshold": 10,
+  "solver_template_dir": "{{template_dir}}",
+  "solver_templates": [
+      "affine_template.json",
+      "polynomial_template.json"
+      ]
+}
