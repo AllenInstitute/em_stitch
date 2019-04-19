@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/AllenInstitute/em-lens-correction.svg?branch=master)](https://travis-ci.org/AllenInstitute/em-lens-correction)
-[![codecov](https://codecov.io/gh/AllenInstitute/em-lens-correction/branch/master/graph/badge.svg)](https://codecov.io/gh/AllenInstitute/em-lens-correction)
+[![Build Status](https://travis-ci.org/AllenInstitute/em-stitch.svg?branch=master)](https://travis-ci.org/AllenInstitute/em-stitch)
+[![codecov](https://codecov.io/gh/AllenInstitute/em-stitch/branch/master/graph/badge.svg)](https://codecov.io/gh/AllenInstitute/em-stitch)
 
 # em-stitch
 
