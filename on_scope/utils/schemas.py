@@ -107,7 +107,7 @@ class UpdateFilepathSchema(ArgSchema):
                      " defaults to dirname or resolved_file"))
 
 
-class ChangePermissionsSchema(ArgSchema):
+class SetPermissionsSchema(ArgSchema):
     data_dir = InputDir(
         required=True,
         description="directory for changing permissions")
@@ -115,7 +115,8 @@ class ChangePermissionsSchema(ArgSchema):
         required=True,
         default=None,
         missing=None,
-        description='setting to recursively apply to dirs')
+        description=('setting to recursively apply to dirs. '
+                     'robocopy writes at 755 and we want at least 775.'))
     file_exts = List(
         Str,
         required=True,
@@ -126,4 +127,13 @@ class ChangePermissionsSchema(ArgSchema):
         required=True,
         default='777',
         missing='777',
-        description='setting to apply to files')
+        description=('setting to apply to files'
+                    'robocopy writes at 744 and we want 777.'))
+
+class SetUpdateUploadSchema(
+        SetPermissionsSchema,
+        UpdateFilepathSchema,
+        UploadToRenderSchema):
+    data_dir = InputDir(
+        required=False,
+        description="override, willset from filename")

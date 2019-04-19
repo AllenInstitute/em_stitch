@@ -1,5 +1,5 @@
 from argschema import ArgSchemaParser
-from .schemas import ChangePermissionsSchema
+from .schemas import SetPermissionsSchema
 import subprocess
 import sys
 
@@ -42,16 +42,20 @@ def set_files(mydir, exts, setting):
     run_cmd(cmd)
 
 
-class ChangePermissions(ArgSchemaParser):
-    default_schema = ChangePermissionsSchema
+class SetPermissions(ArgSchemaParser):
+    default_schema = SetPermissionsSchema
 
     def run(self):
+        set_dirs(
+                self.args['data_dir'],
+                self.args['dir_setting'])
 
-        set_dirs(self.args['data_dir'], self.args['dir_setting'])
-        
-        set_files(self.args['data_dir'], self.args['file_exts'], self.args['file_setting'])
+        set_files(
+                self.args['data_dir'],
+                self.args['file_exts'], 
+                self.args['file_setting'])
 
 
 if __name__ == "__main__":
-    p = ChangePermissions(input_data=example, args=[])
+    p = SetPermissions(input_data=example, args=[])
     p.run()
