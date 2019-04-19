@@ -42,7 +42,7 @@ class UpdateUrls(ArgSchemaParser):
                 s = t.ip['0'][k]
                 if s:
                     orig = urllib.parse.unquote(urllib.parse.urlparse(s).path)
-                    t.ip['0'][k] = pathlib.Path(
+                    t.ip['0'][k] = pathlib.PurePosixPath(
                             self.args['image_directory'],
                             os.path.basename(orig)).as_uri()
 

@@ -61,8 +61,14 @@ class RenderClientParameters(DefaultSchema):
     client_scripts = Str(
         required=True, description='path to render client scripts')
     memGB = Str(
-        required=False, default='5G',
+        required=False,
+        default='5G',
         description='string describing java heap memory (default 5G)')
+    validate_client=Boolean(
+        required=False,
+        default=False,
+        description="will avoid problems on windows if we use use_rest")
+
 
 
 class UploadToRenderSchema(ArgSchema):
@@ -100,11 +106,14 @@ class UpdateUrlSchema(ArgSchema):
         required=True,
         missing=None,
         description="stack name")
-    image_directory = InputDir(
+    image_directory = Str(
         required=False,
         missing=None,
         description=("directory where images and masks are now"
-                     " defaults to dirname or resolved_file"))
+                     " defaults to dirname or resolved_file"
+                     " is a str so windows does not try to validate as dir"
+                     " should be the POSIX path the render server sees"
+                     " not the client path"))
 
 
 class SetPermissionsSchema(ArgSchema):

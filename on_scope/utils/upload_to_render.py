@@ -29,10 +29,11 @@ def upload_resolved_file(render_params, stack, resolved_file, close_stack):
     render = renderapi.connect(**render_params)
 
     renderapi.stack.create_stack(stack, render=render)
-    renderapi.client.import_tilespecs_parallel(
+    renderapi.client.import_tilespecs(
             stack,
             resolved.tilespecs,
             sharedTransforms=resolved.transforms,
+            use_rest=True,
             render=render)
     if close_stack:
         renderapi.stack.set_stack_state(

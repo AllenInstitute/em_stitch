@@ -1,28 +1,36 @@
 from argschema import ArgSchemaParser
-from .schemas import SetUpdateUploadSchema
-from .set_permissions import SetPermissions
-from .update_urls import UpdateUrls
-from .upload_to_render import UploadToRender
+from on_scope.utils.schemas import SetUpdateUploadSchema
+from on_scope.utils.set_permissions import SetPermissions
+from on_scope.utils.update_urls import UpdateUrls
+from on_scope.utils.upload_to_render import UploadToRender
 import os
 
 
 example = {
-        "collection_file": "/data/em-131fs3/lctest/T6.2019.04.18.110-120/000111/0/collection.json.gz",
-        "resolved_file": "/data/em-131fs3/lctest/T6.2019.04.18.110-120/000111/0/resolvedtiles_AffineModel_0.json.gz",
+        # these 2 are how the local client (windows or posix) sees these files
+        # windows
+        # "collection_file": "Q:/lctest/T6.2019.04.19.100-140/000109/0/collection.json.gz",
+        # "resolved_file": "Q:/lctest/T6.2019.04.19.100-140/000109/0/resolvedtiles_AffineModel_0.json.gz",
+        # posix
+        "collection_file": "/data/em-131fs3/lctest/T6.2019.04.19.100-140/000109/0/collection.json.gz",
+        "resolved_file": "/data/em-131fs3/lctest/T6.2019.04.19.100-140/000109/0/resolvedtiles_AffineModel_0.json.gz",
+        # this one is a posix path for the render server to find the images
+        # windows and posix are the same
+        "image_directory": "/data/em-131fs3/lctest/T6.2019.04.18.110-120/000111/0/",
         "dir_setting": '777',
         'file_exts': ['.json', 'json.gz'],
         'file_setting': '777',
         "backup_copy": True,
-        "image_directory": None,
         "render": {
                 "host": "em-131fs",
                 "port": 8987,
-                "owner": "danielk",
+                "owner": "the_temcas",
                 "project": "montage_test",
-                "client_scripts": "/allen/aibs/pipeline/image_processing/volume_assembly/render-jars/production/scripts"
+                "client_scripts": "/allen/aibs/pipeline/image_processing/volume_assembly/render-jars/production/scripts",
+                "validate_client": False
               },
-        "stack": "T4_test2",
-        "collection": "T4_test2",
+        "stack": "T6_test",
+        "collection": "T6_test2",
         }
 
 
