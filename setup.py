@@ -15,7 +15,7 @@ class PyTest(TestCommand):
         # import here, cause outside the eggs aren't loaded
         import shlex
         import pytest
-        self.pytest_args += " --cov=em-stitch --cov-report html "\
+        self.pytest_args += " --cov=em_stitch --cov-report html "\
                             "--junitxml=test-reports/test.xml " \
                             "--ignore=src"
 
@@ -33,11 +33,11 @@ for i in range(len(required)):
     if required[i][0:2] == "-e":
         required[i] = "emaligner"
 
-setup(name='em-stitch',
+setup(name='em_stitch',
       use_scm_version=True,
       description='a python package for stitching EM images',
       author_email='danielk@alleninstitute.org',
-      url='https://github.com/AllenInstitute/em-stitch',
+      url='https://github.com/AllenInstitute/em_stitch',
       packages=find_packages(),
       setup_requires=['setuptools_scm'],
       install_requires=required,

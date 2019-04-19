@@ -1,8 +1,8 @@
 from argschema import ArgSchemaParser
-from em-stitch.utils.schemas import SetUpdateUploadSchema
-from em-stitch.utils.set_permissions import SetPermissions
-from em-stitch.utils.update_urls import UpdateUrls
-from em-stitch.utils.upload_to_render import UploadToRender
+from em_stitch.utils.schemas import SetUpdateUploadSchema
+from em_stitch.utils.set_permissions import SetPermissions
+from em_stitch.utils.update_urls import UpdateUrls
+from em_stitch.utils.upload_to_render import UploadToRender
 import os
 import logging
 

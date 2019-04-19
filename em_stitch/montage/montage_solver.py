@@ -1,10 +1,10 @@
 from argschema import ArgSchemaParser
 import renderapi
-from em-stitch.montage import meta_to_collection
-from em-stitch.montage.schemas import MontageSolverSchema
-from em-stitch.utils.generate_EM_tilespecs_from_metafile import \
+from em_stitch.montage import meta_to_collection
+from em_stitch.montage.schemas import MontageSolverSchema
+from em_stitch.utils.generate_EM_tilespecs_from_metafile import \
         GenerateEMTileSpecsModule
-from em-stitch.utils.utils import pointmatch_filter, get_z_from_metafile
+from em_stitch.utils.utils import pointmatch_filter, get_z_from_metafile
 from EMaligner import jsongz
 import EMaligner.EMaligner as ema
 import json

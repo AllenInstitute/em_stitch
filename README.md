@@ -1,7 +1,7 @@
-[![Build Status](https://travis-ci.org/AllenInstitute/em-stitch.svg?branch=master)](https://travis-ci.org/AllenInstitute/em-stitch)
-[![codecov](https://codecov.io/gh/AllenInstitute/em-stitch/branch/master/graph/badge.svg)](https://codecov.io/gh/AllenInstitute/em-stitch)
+[![Build Status](https://travis-ci.org/AllenInstitute/em_stitch.svg?branch=master)](https://travis-ci.org/AllenInstitute/em_stitch)
+[![codecov](https://codecov.io/gh/AllenInstitute/em_stitch/branch/master/graph/badge.svg)](https://codecov.io/gh/AllenInstitute/em_stitch)
 
-# em-stitch
+# em_stitch
 
 Lens correction solver and stitching utilities for EM images.
 
