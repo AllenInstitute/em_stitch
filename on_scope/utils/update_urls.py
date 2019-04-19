@@ -56,7 +56,7 @@ class UpdateUrls(ArgSchemaParser):
                 json=jsongz.load(resolved_path))
 
         if self.args['image_directory'] is None:
-            self.args['image_directory'] = os.path.join(
+            self.args['image_directory'] = pathlib.PurePosixPath(
                     self.args['server_mount'],
                     self.args['fdir'])
 
