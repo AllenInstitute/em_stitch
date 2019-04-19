@@ -4,7 +4,7 @@ from argschema import ArgSchema
 from argschema.schemas import DefaultSchema
 from argschema.fields import (
         InputDir, InputFile, Float, Nested,
-        Int, OutputFile, Str, Boolean)
+        Int, OutputFile, Str, Boolean, List)
 warnings.simplefilter(
         action='ignore',
         category=ChangedInMarshmallow3Warning)
@@ -105,3 +105,25 @@ class UpdateFilepathSchema(ArgSchema):
         missing=None,
         description=("directory where images and masks are now"
                      " defaults to dirname or resolved_file"))
+
+
+class ChangePermissionsSchema(ArgSchema):
+    data_dir = InputDir(
+        required=True,
+        description="directory for changing permissions")
+    dir_setting = Str(
+        required=True,
+        default=None,
+        missing=None,
+        description='setting to recursively apply to dirs')
+    file_exts = List(
+        Str,
+        required=True,
+        missing=None,
+        default=None,
+        description="file extensions to change")
+    file_setting = Str(
+        required=True,
+        default='777',
+        missing='777',
+        description='setting to apply to files')
