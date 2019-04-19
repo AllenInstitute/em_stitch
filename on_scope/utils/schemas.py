@@ -91,7 +91,7 @@ class UploadToRenderSchema(ArgSchema):
         description="close stack or not after upload")
 
 
-class UpdateFilepathSchema(ArgSchema):
+class UpdateUrlSchema(ArgSchema):
     backup_copy = Boolean(
         required=False,
         default=True,
@@ -128,11 +128,12 @@ class SetPermissionsSchema(ArgSchema):
         default='777',
         missing='777',
         description=('setting to apply to files'
-                    'robocopy writes at 744 and we want 777.'))
+                     'robocopy writes at 744 and we want 777.'))
+
 
 class SetUpdateUploadSchema(
         SetPermissionsSchema,
-        UpdateFilepathSchema,
+        UpdateUrlSchema,
         UploadToRenderSchema):
     data_dir = InputDir(
         required=False,

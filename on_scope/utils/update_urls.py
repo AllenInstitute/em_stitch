@@ -1,12 +1,10 @@
-import json
 import os
-import glob
 import shutil
 from six.moves import urllib
 import pathlib
 from EMaligner import jsongz
 from argschema import ArgSchemaParser
-from .schemas import UpdateFilepathSchema
+from .schemas import UpdateUrlSchema
 import renderapi
 
 example = {
@@ -25,8 +23,8 @@ def backup(f):
     shutil.copy(f, newf)
 
 
-class UpdateFilepaths(ArgSchemaParser):
-    default_schema = UpdateFilepathSchema
+class UpdateUrls(ArgSchemaParser):
+    default_schema = UpdateUrlSchema
 
     def run(self):
         if self.args['backup_copy']:
@@ -36,7 +34,8 @@ class UpdateFilepaths(ArgSchemaParser):
                 json=jsongz.load(self.args['resolved_file']))
 
         if self.args['image_directory'] is None:
-            self.args['image_directory'] = os.path.dirname(self.args['resolved_file'])
+            self.args['image_directory'] = os.path.dirname(
+                    self.args['resolved_file'])
 
         for t in resolved.tilespecs:
             for k in ['imageUrl', 'maskUrl']:
@@ -47,12 +46,10 @@ class UpdateFilepaths(ArgSchemaParser):
                             self.args['image_directory'],
                             os.path.basename(orig)).as_uri()
 
-        print("updated %s" % self.args['resolved_file'])
         self.args['resolved_file'] = jsongz.dump(
                 resolved.to_dict(), self.args['resolved_file'], compress=None)
-        print("updated %s" % self.args['resolved_file'])
 
 
 if __name__ == '__main__':
-    u = UpdateFilepaths(input_data=example, args=[])
+    u = UpdateUrls(input_data=example, args=[])
     u.run()

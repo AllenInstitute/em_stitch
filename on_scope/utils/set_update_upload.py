@@ -1,7 +1,7 @@
 from argschema import ArgSchemaParser
 from .schemas import SetUpdateUploadSchema
 from .set_permissions import SetPermissions
-from .update_filepaths import UpdateFilepaths
+from .update_urls import UpdateUrls
 from .upload_to_render import UploadToRender
 import os
 
@@ -36,17 +36,17 @@ def set_args(args):
 
 
 def update_args(args):
-    new_args = {k: args[k] for k in 
+    new_args = {k: args[k] for k in
                 ['backup_copy', 'resolved_file', 'image_directory']}
     return dict(new_args)
 
 
 def upload_args(args):
-    new_args = {k: args[k] for k in 
+    new_args = {k: args[k] for k in
                 ['render', 'stack', 'collection',
                  'collection_file', 'resolved_file']}
     return dict(new_args)
-            
+
 
 class SetUpdateUpload(ArgSchemaParser):
     default_schema = SetUpdateUploadSchema
@@ -56,7 +56,7 @@ class SetUpdateUpload(ArgSchemaParser):
             pset = SetPermissions(input_data=set_args(self.args), args=[])
             pset.run()
 
-        fpaths = UpdateFilepaths(input_data=update_args(self.args), args=[])
+        fpaths = UpdateUrls(input_data=update_args(self.args), args=[])
         fpaths.run()
 
         up = UploadToRender(input_data=upload_args(self.args), args=[])

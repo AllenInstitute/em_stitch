@@ -1,7 +1,5 @@
 from argschema import ArgSchemaParser
 import renderapi
-import os
-import json
 from .schemas import UploadToRenderSchema
 from EMaligner import jsongz
 

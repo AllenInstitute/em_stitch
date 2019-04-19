@@ -52,7 +52,7 @@ class SetPermissions(ArgSchemaParser):
 
         set_files(
                 self.args['data_dir'],
-                self.args['file_exts'], 
+                self.args['file_exts'],
                 self.args['file_setting'])
 
 
