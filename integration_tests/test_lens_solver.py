@@ -4,7 +4,7 @@ import pytest
 import os
 import copy
 from EMaligner import jsongz
-from em-stitch.lens_correction.lens_correction_solver import (
+from em_stitch.lens_correction.lens_correction_solver import (
         LensCorrectionSolver, make_collection_json,
         LensCorrectionException)
 from tempfile import TemporaryDirectory
