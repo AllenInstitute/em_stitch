@@ -6,11 +6,18 @@ from EMaligner import jsongz
 from argschema import ArgSchemaParser
 from .schemas import UpdateUrlSchema
 import renderapi
+import logging
+
+logger = logging.getLogger(__name__)
 
 example = {
         "backup_copy": True,
-        "resolved_file": "/data/em-131fs3/lctest/T4.2019.04.18.1650-1660/001650/0/resolvedtiles_AffineModel_0.json.gz",
-        "image_directory": None
+        "client_mount_or_map": "/data/em-131fs3",  # could also be "Q:" e.g
+        "fdir": 'lctest/T6.2019.04.18.110-120/000116/0/',
+        "resolved_file": "resolvedtiles_AffineModel_0.json.gz",
+        "server_mount": "/data/em-131fs3",  # leave as posix
+        "image_directory": None,
+        "log_level": "INFO"
         }
 
 
@@ -19,23 +26,39 @@ def backup(f):
         if f.endswith(ext):
             b = f.split(ext)[0]
             break
-    newf = b + '_backup_' + ext
+    i = 0
+    newf = f
+    while os.path.isfile(newf):
+        # were having some permission errors
+        # from multiple users writing this backup
+        # file.
+        newf = b + '_backup_%d' % i + ext
+        i += 1
     shutil.copy(f, newf)
+    logger.info("copied %s to %s" % (f, newf))
 
 
 class UpdateUrls(ArgSchemaParser):
     default_schema = UpdateUrlSchema
 
     def run(self):
+        logger.setLevel(self.args['log_level'])
+
+        resolved_path = os.path.join(
+                self.args['client_mount_or_map'],
+                self.args['fdir'],
+                self.args['resolved_file'])
+
         if self.args['backup_copy']:
-            backup(self.args['resolved_file'])
+            backup(resolved_path)
 
         resolved = renderapi.resolvedtiles.ResolvedTiles(
-                json=jsongz.load(self.args['resolved_file']))
+                json=jsongz.load(resolved_path))
 
         if self.args['image_directory'] is None:
-            self.args['image_directory'] = os.path.dirname(
-                    self.args['resolved_file'])
+            self.args['image_directory'] = os.path.join(
+                    self.args['server_mount'],
+                    self.args['fdir'])
 
         for t in resolved.tilespecs:
             for k in ['imageUrl', 'maskUrl']:
@@ -47,7 +70,9 @@ class UpdateUrls(ArgSchemaParser):
                             os.path.basename(orig)).as_uri()
 
         self.args['resolved_file'] = jsongz.dump(
-                resolved.to_dict(), self.args['resolved_file'], compress=None)
+                resolved.to_dict(), resolved_path, compress=None)
+
+        logger.info("updated tilespec urls in %s" % resolved_path)
 
 
 if __name__ == '__main__':

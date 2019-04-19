@@ -64,62 +64,25 @@ class RenderClientParameters(DefaultSchema):
         required=False,
         default='5G',
         description='string describing java heap memory (default 5G)')
-    validate_client=Boolean(
+    validate_client = Boolean(
         required=False,
         default=False,
         description="will avoid problems on windows if we use use_rest")
 
 
-
-class UploadToRenderSchema(ArgSchema):
-    render = Nested(
-        RenderClientParameters,
+class common_schema(ArgSchema):
+    client_mount_or_map = Str(
         required=True,
-        description="parameters to connect to render server")
-    stack = Str(
-        required=False,
-        description="name of destination stack in render")
-    collection = Str(
-        required=False,
-        description="name of destination collection in render")
-    resolved_file = InputFile(
-        required=False,
-        missing=None,
-        description="stack name")
-    collection_file = InputFile(
-        required=False,
-        missing=None,
-        description="collection name")
-    close_stack = Boolean(
-        required=False,
-        default=True,
-        missing=True,
-        description="close stack or not after upload")
-
-
-class UpdateUrlSchema(ArgSchema):
-    backup_copy = Boolean(
-        required=False,
-        default=True,
-        description="backup the resolved tilespecs file before overwriting")
-    resolved_file = InputFile(
+        default="/data/em-131fs3",
+        missing="/data/em-131fs3",
+        description=("where the client sees the robocopied destination"
+                     " windows example 'Q:'"))
+    fdir = Str(
         required=True,
-        missing=None,
-        description="stack name")
-    image_directory = Str(
-        required=False,
-        missing=None,
-        description=("directory where images and masks are now"
-                     " defaults to dirname or resolved_file"
-                     " is a str so windows does not try to validate as dir"
-                     " should be the POSIX path the render server sees"
-                     " not the client path"))
+        description="appended to client_mount to find files")
 
 
-class SetPermissionsSchema(ArgSchema):
-    data_dir = InputDir(
-        required=True,
-        description="directory for changing permissions")
+class SetPermissionsSchema(common_schema):
     dir_setting = Str(
         required=True,
         default=None,
@@ -140,10 +103,55 @@ class SetPermissionsSchema(ArgSchema):
                      'robocopy writes at 744 and we want 777.'))
 
 
+class resolved_schema(ArgSchema):
+    resolved_file = Str(
+        required=True,
+        missing=None,
+        description="basename of resolved_file")
+
+
+class UpdateUrlSchema(common_schema, resolved_schema):
+    backup_copy = Boolean(
+        required=False,
+        default=True,
+        description="backup the resolved tilespecs file before overwriting")
+    server_mount = Str(
+        required=True,
+        default="/data/em-131fs3",
+        missing="/data/em-131fs3",
+        description="where the render server sees the image files")
+    image_directory = Str(
+        required=False,
+        missing=None,
+        default=None,
+        description=(" if missing, imageUrls are at server_mount/fdir/"
+                     " if not missing, this."))
+
+
+class UploadToRenderSchema(common_schema, resolved_schema):
+    render = Nested(
+        RenderClientParameters,
+        required=True,
+        description="parameters to connect to render server")
+    stack = Str(
+        required=False,
+        description="name of destination stack in render")
+    collection = Str(
+        required=False,
+        description="name of destination collection in render")
+    collection_file = Str(
+        required=False,
+        missing=None,
+        description="collection file basename")
+    close_stack = Boolean(
+        required=False,
+        default=True,
+        missing=True,
+        description="close stack or not after upload")
+
+
 class SetUpdateUploadSchema(
         SetPermissionsSchema,
         UpdateUrlSchema,
         UploadToRenderSchema):
-    data_dir = InputDir(
-        required=False,
-        description="override, willset from filename")
+    pass

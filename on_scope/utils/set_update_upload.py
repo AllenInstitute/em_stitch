@@ -4,19 +4,19 @@ from on_scope.utils.set_permissions import SetPermissions
 from on_scope.utils.update_urls import UpdateUrls
 from on_scope.utils.upload_to_render import UploadToRender
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 example = {
         # these 2 are how the local client (windows or posix) sees these files
-        # windows
-        # "collection_file": "Q:/lctest/T6.2019.04.19.100-140/000109/0/collection.json.gz",
-        # "resolved_file": "Q:/lctest/T6.2019.04.19.100-140/000109/0/resolvedtiles_AffineModel_0.json.gz",
-        # posix
-        "collection_file": "/data/em-131fs3/lctest/T6.2019.04.19.100-140/000109/0/collection.json.gz",
-        "resolved_file": "/data/em-131fs3/lctest/T6.2019.04.19.100-140/000109/0/resolvedtiles_AffineModel_0.json.gz",
-        # this one is a posix path for the render server to find the images
-        # windows and posix are the same
-        "image_directory": "/data/em-131fs3/lctest/T6.2019.04.18.110-120/000111/0/",
+        "fdir": "lctest/T6.2019.04.19.100-140/000109/0/",
+        "collection_file": "collection.json.gz",
+        "resolved_file": "resolvedtiles_AffineModel_0.json.gz",
+        "server_mount": "/data/em-131fs3",  # leave as posix
+        # "client_mount_or_map": "Q:/", # windows example
+        "client_mount_or_map": "/data/em-131fs3",  # posix example
         "dir_setting": '777',
         'file_exts': ['.json', 'json.gz'],
         'file_setting': '777',
@@ -29,30 +29,31 @@ example = {
                 "client_scripts": "/allen/aibs/pipeline/image_processing/volume_assembly/render-jars/production/scripts",
                 "validate_client": False
               },
-        "stack": "T6_test",
-        "collection": "T6_test2",
+        "stack": "T7_test",
+        "collection": "T7_test",
+        "log_level": "INFO"
         }
 
 
 def set_args(args):
-    new_args = {
-            'data_dir': os.path.dirname(args['resolved_file'])
-            }
-    for k in ['dir_setting', 'file_exts', 'file_setting']:
-        new_args[k] = args[k]
+    new_args = {k: args[k] for k in
+                ['fdir', 'client_mount_or_map', 'log_level',
+                 'dir_setting', 'file_exts', 'file_setting']}
     return dict(new_args)
 
 
 def update_args(args):
     new_args = {k: args[k] for k in
-                ['backup_copy', 'resolved_file', 'image_directory']}
+                ['fdir', 'client_mount_or_map', 'log_level',
+                 'backup_copy', 'resolved_file', 'image_directory']}
     return dict(new_args)
 
 
 def upload_args(args):
     new_args = {k: args[k] for k in
-                ['render', 'stack', 'collection',
-                 'collection_file', 'resolved_file']}
+                ['fdir', 'client_mount_or_map',
+                 'render', 'stack', 'collection',
+                 'collection_file', 'resolved_file', 'log_level']}
     return dict(new_args)
 
 
@@ -60,6 +61,8 @@ class SetUpdateUpload(ArgSchemaParser):
     default_schema = SetUpdateUploadSchema
 
     def run(self):
+        logger.setLevel(self.args['log_level'])
+
         if os.name == 'posix':
             pset = SetPermissions(input_data=set_args(self.args), args=[])
             pset.run()
