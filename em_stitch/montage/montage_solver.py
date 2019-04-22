@@ -165,6 +165,11 @@ class MontageSolver(ArgSchemaParser):
     default_schema = MontageSolverSchema
 
     def run(self):
+        if 'metafile' not in self.args:
+            self.args['metafile'] = get_metafile_path(self.args['data_dir'])
+        else:
+            self.args['data_dir'] = os.path.dirname(self.args['metafile'])
+
         if not self.args['output_dir']:
             self.args['output_dir'] = self.args['data_dir']
 
@@ -182,18 +187,16 @@ class MontageSolver(ArgSchemaParser):
                 collection,
                 compress=self.args['compress_output'])
 
-        metafile = get_metafile_path(self.args['data_dir'])
-
         # make raw tilespec json
         rawspecpath, z = make_raw_tilespecs(
-                metafile,
+                self.args['metafile'],
                 self.args['output_dir'],
                 matches[0]['pGroupId'],
                 self.args['compress_output'])
 
         # get the ref transform
         tform = get_transform(
-                metafile,
+                self.args['metafile'],
                 self.args['ref_transform'],
                 self.args['ref_transform_dict'],
                 self.args['read_transform_from'])
