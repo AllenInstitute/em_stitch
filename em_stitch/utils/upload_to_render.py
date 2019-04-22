@@ -50,6 +50,14 @@ def upload_resolved_file(render_params, stack, resolved_file, close_stack):
     logger.info("imported %d tilespecs to render from %s" % (
         len(resolved.tilespecs), resolved_file))
 
+    url = ("\nhttp://" +
+           "%s:%d" % (render_params['host'], render_params['port']) +
+           "/render-ws/view/stacks.html?ndvizHost=em-131fs%3A8001" +
+           "&renderStack=%s" % stack +
+           "&renderStackOwner=%s" % render_params['owner'] +
+           "&renderStackProject=%s" % render_params['project'])
+    logger.info(url)
+
     return
 
 
