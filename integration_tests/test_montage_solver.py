@@ -4,7 +4,7 @@ import pytest
 import os
 import copy
 from EMaligner import jsongz
-from on_scope.montage.montage_solver import MontageSolver
+from em_stitch.montage.montage_solver import MontageSolver
 from tempfile import TemporaryDirectory
 import glob
 import shutil

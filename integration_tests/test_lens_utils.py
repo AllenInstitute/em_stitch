@@ -1,5 +1,5 @@
-from on_scope.utils.utils import src_from_xy
-from on_scope.lens_correction.utils import (
+from em_stitch.utils.utils import src_from_xy
+from em_stitch.lens_correction.utils import (
         maps_from_tform,
         split_inverse_tform,
         remove_weighted_matches,
