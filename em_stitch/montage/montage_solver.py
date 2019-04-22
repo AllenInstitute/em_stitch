@@ -88,12 +88,6 @@ def do_solves(collection, input_stack, z, compress, solver_args):
     return results
 
 
-def check_failed_from_metafile(metafile):
-    with open(metafile, 'r') as f:
-        j = json.load(f)
-    return j[2]['tile_qc']['failed']
-
-
 def montage_filter_matches(matches, thresh, model='Similarity'):
     for match in matches:
         _, _, w, _ = pointmatch_filter(
