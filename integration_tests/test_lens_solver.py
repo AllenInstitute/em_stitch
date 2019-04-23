@@ -74,6 +74,7 @@ def test_multifile_exception(solver_input_args):
             lcs = LensCorrectionSolver(input_data=local_args, args=[])
             lcs.run()
 
+
 @pytest.mark.parametrize("compress", [True, False])
 def test_make_collection(solver_input_args, compress):
     ftemplate = glob.glob(

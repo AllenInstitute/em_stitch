@@ -12,8 +12,13 @@ warnings.simplefilter(
 
 class MontageSolverSchema(ArgSchema):
     data_dir = InputDir(
-        required=True,
+        required=False,
         description="directory containing metafile, images, and matches")
+    metafile = InputFile(
+        required=False,
+        description=("fullpath to metafile. Helps in the case of multiple"
+                     " metafiles in one directory. data_dir will take "
+                     " os.path.dirname(metafile)"))
     output_dir = OutputDir(
         required=False,
         missing=None,
@@ -60,3 +65,9 @@ class MontageSolverSchema(ArgSchema):
             if not os.path.isfile(argpath):
                 raise mm.ValidationError(
                         "solver arg file doesn't exist: %s" % argpath)
+
+    @mm.post_load
+    def check_metafile(self, data):
+        if ('data_dir' not in data) & ('metafile' not in data):
+            raise mm.ValidationError(" must specify either data_dir"
+                                     " or metafile")
