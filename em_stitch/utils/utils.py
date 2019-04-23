@@ -46,7 +46,7 @@ def get_z_from_metafile(metafile):
         tape = int(j[0]['metadata']['media_id'])
         offset = offsets[
                 np.argwhere(loads == 'Tape%d' % tape).flatten()[0]]['offset']
-    except ValueError:
+    except (ValueError, IndexError):
         offset = 0
     grid = int(j[0]['metadata']['grid'])
     return offset + grid
