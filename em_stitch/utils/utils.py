@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import json
+import renderapi
 
 
 def get_z_from_metafile(metafile):
@@ -58,6 +59,31 @@ def src_from_xy(x, y, transpose=True):
     if not transpose:
         return src
     return src.transpose()
+
+
+def correction_grid(transform, npts=20):
+    """create src and dst for a thinplatespline transform
+    Parameters
+    ----------
+    transform : renderapi.transform.ThinPlateSplineTransform
+        or <>.to_dict() result of said transform
+
+    Returns
+    -------
+    src : numpy array
+        Nx2 where N = npts**2. linearly sampled grid
+    dst : numpy array
+        Nx2. The result of transform.tform(src)
+    """
+
+    if isinstance(transform, dict):
+        transform = renderapi.transform.ThinPlateSplineTransform(
+                json=transform)
+    xymax = transform.srcPts.max(axis=1)
+    src = src_from_xy(
+            np.linspace(0, xymax[0], npts),
+            np.linspace(0, xymax[1], npts))
+    return src, transform.tform(src)
 
 
 def pointmatch_filter(
