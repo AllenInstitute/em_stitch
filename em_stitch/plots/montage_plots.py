@@ -1,3 +1,4 @@
+from matplotlib.backends.backend_pdf import PdfPages
 from argschema import ArgSchemaParser
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -6,6 +7,7 @@ import numpy as np
 import json
 from EMaligner import jsongz
 from em_stitch.plots.schemas import MontagePlotsSchema
+import os
 
 example = {
         "collection_path": "/data/em-131fs3/lctest/T4.2019.04.29b/001738/0/collection.json.gz",
@@ -53,21 +55,7 @@ def make_xyres(matches, resolved):
             np.concatenate(mxy), np.concatenate(mres))
 
 
-def get_tile_centers(res0, res1):
-    tids1 = np.array([t.tileId for t in res1.tilespecs])
-    xy0 = []
-    xy1 = []
-    for t0 in res0.tilespecs:
-        xy0.append(t0.bbox_transformed(
-            reference_tforms=res0.transforms)[0:4, :].mean(axis=0))
-        ind = np.argwhere(tids1 == t0.tileId).flatten()[0]
-        t1 = res1.tilespecs[ind]
-        xy1.append(t1.bbox_transformed(
-            reference_tforms=res1.transforms)[0:4, :].mean(axis=0))
-    return np.array(xy0), np.array(xy1)
-
-
-def one_plot(f, ax, xy, c, vmin=-100, vmax=100, title=None, colorbar=True):
+def one_plot(f, ax, xy, c, vmin=-100, vmax=100, title=None, colorbar=True,fontsize=10):
     col = c
     if vmin == vmax:
         col = 'k'
@@ -86,7 +74,7 @@ def one_plot(f, ax, xy, c, vmin=-100, vmax=100, title=None, colorbar=True):
         f.colorbar(s, cax=cax)
     else:
         cax.axis('off')
-    ax.set_title(title)
+    ax.set_title(title, fontsize=fontsize)
 
 
 class MontagePlots(ArgSchemaParser):
@@ -108,16 +96,21 @@ class MontagePlots(ArgSchemaParser):
                             'filtered_res': mres.tolist()
                             }, f, indent=2)
 
+        pdf = None 
+        if self.args['pdf_out']:
+            pdf = PdfPages(self.args['pdf_out'])
         if self.args['make_plot']:
             f, a = plt.subplots(
                     2, 2, clear=True, num=1,
                     sharex=True, sharey=True,
                     figsize=(12, 12))
             vmnmx = 5
+            title = self.args['collection_path']
+            title += '\n' + self.args['resolved_path'] + '\n'
             one_plot(
                     f, a[0, 0], xy, res[:, 0],
                     vmin=-vmnmx, vmax=vmnmx,
-                    title=('x res [px]'))
+                    title=title+'x res [px]', fontsize=8)
             one_plot(
                     f, a[0, 1], xy, res[:, 1],
                     vmin=-vmnmx, vmax=vmnmx, title='y res [px]')
@@ -128,10 +121,12 @@ class MontagePlots(ArgSchemaParser):
                     f, a[1, 1], mxy, np.linalg.norm(mres, axis=1),
                     vmin=0, vmax=vmnmx*np.sqrt(2), title='filtered')
             a[0, 0].invert_yaxis()
-            if self.args['save_plot_path']:
-                f.savefig(self.args['save_plot_path'], dpi=300)
-            if self.args['show']:
-                plt.show()
+        if self.args['show']:
+            plt.show()
+        if pdf:
+            pdf.savefig(f)
+            pdf.close()
+            print('wrote %s' % os.path.abspath(self.args['pdf_out']))
 
 
 if __name__ == "__main__":

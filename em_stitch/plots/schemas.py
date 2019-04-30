@@ -70,6 +70,11 @@ class MontagePlotsSchema(ArgSchema):
         missing=True,
         default=True,
         description=("show on screen?"))
+    pdf_out = OutputFile(
+        required=True,
+        missing=None,
+        default=None,
+        description="where to write the pdf output")
 
 
 class ViewMatchesSchema(ArgSchema):
