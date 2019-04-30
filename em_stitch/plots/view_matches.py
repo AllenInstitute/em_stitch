@@ -1,15 +1,14 @@
-import json
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 import os
-import glob
 import numpy as np
-from meta_to_collection import main
-import sys
 import logging
 from lens_correction.utils import maps_from_tform
+from EMaligner import jsongz
 import renderapi
 import cv2
+from em_stitch.plots.schemas import ViewMatchesSchema
+from argschema import ArgSchemaParser
 
 logger = logging.getLogger()
 
@@ -45,7 +44,7 @@ def plot_ims_and_coords(
         pim = cv2.remap(pim, map1, map2, cv2.INTER_NEAREST)
         qim = cv2.remap(qim, map1, map2, cv2.INTER_NEAREST)
 
-    f, a = plt.subplots(1, 2, clear=True, num=fignum)
+    f, a = plt.subplots(1, 2, clear=True, num=fignum, figsize=(11, 8))
 
     a[0].imshow(pim, cmap='gray')
     nind = np.isclose(w, 0.0)
@@ -61,53 +60,64 @@ def plot_ims_and_coords(
     return f, a
 
 
-
-ddir = "/data/em-131fs3/lctest/T6_1/20190328195505_reference/0"
-ddir = "/data/em-131fs3/lctest/T6_1/20190328203101_reference/0"
-ddir = "/data/em-131fs3/lctest/T6_1/20190328204841_reference/0"
-collection = os.path.join(ddir, 'collection.json')
-
-ddir = '/data/em-131fs3/lctest/T6_20190401_4pctOverlap/000067/0'
-collection = os.path.join(ddir, 'montage_collection.json')
-
-ddir = "/data/em-131fs3/lctest/20190408164246_reference/0"
-ddir = "/data/em-131fs3/lctest/20190412124657_reference/0"
-collection = os.path.join(ddir, 'collection.json')
-view_all = True
-show = True
-
-tform = None
-tform_path = os.path.join(ddir, 'lens_corr_transform.json')
-if os.path.isfile(tform_path):
-    with open(tform_path, 'r') as f:
-        tformj = json.load(f)
-    tform = renderapi.transform.ThinPlateSplineTransform(json=tformj)
-
-if not os.path.isfile(collection):
-    main([ddir, '-o', collection])
-
-mcp = glob.glob(collection)[0]
-with open(mcp, 'r') as f:
-    matches = json.load(f)
-
-if len(sys.argv) > 1:
-    try:
-        ind = int(sys.argv[1])
-    except TypeError as e:
-        print('not an integer', str(e))
+example = {
+        "data_dir": "/data/em-131fs3/lctest/T3_OL5pct/005270/0"
+        }
 
 
-if view_all:
-    inds = range(len(matches))
-else:
-    inds = [ind]
-print('using indices {}'.format(inds))
+class ViewMatches(ArgSchemaParser):
+    default_schema = ViewMatchesSchema
 
-with PdfPages("view_matches_" + ddir.split('/')[-2] + ".pdf") as pdf:
-    for ind in inds:
-        pim, qim, p, q, w, pname, qname = get_ims_and_coords(matches[ind], ddir)
-        f, a = plot_ims_and_coords(
-                pim, qim, p, q, w, pname=pname, qname=qname, tform=tform, fignum=2)
-        pdf.savefig(f)
-        if show:
-            plt.show()
+    def run(self):
+        cpath = self.args.get(
+                'collection_path',
+                os.path.join(
+                    self.args['data_dir'],
+                    self.args['collection_basename']))
+        if (
+                (not os.path.isfile(cpath)) &
+                (os.path.splitext(cpath)[-1] == '.json')):
+            cpath += '.gz'
+
+        self.matches = jsongz.load(cpath)
+        self.get_transform()
+
+        if self.args['view_all']:
+            inds = np.arange(len(self.matches))
+        else:
+            inds = [self.args['match_index']]
+
+        with PdfPages(self.args['pdf_out']) as pdf:
+            for ind in inds:
+                pim, qim, p, q, w, pname, qname = get_ims_and_coords(
+                        self.matches[ind],
+                        self.args['data_dir'])
+                f, a = plot_ims_and_coords(
+                        pim, qim, p, q, w, pname=pname,
+                        qname=qname, tform=self.tform, fignum=2)
+                pdf.savefig(f)
+                if self.args['show']:
+                    plt.show()
+
+        print('wrote %s' % os.path.abspath(self.args['pdf_out']))
+
+    def get_transform(self):
+        self.tform = None
+        if 'transform_file' in self.args:
+            self.tform = renderapi.transform.ThinPlateSplineTransform(
+                    json=jsongz.load(self.args['transform_file']))
+        else:
+            for fbase in self.args['resolved_tiles']:
+                fpath = os.path.join(
+                        self.args['data_dir'],
+                        fbase)
+                if os.path.isfile(fpath):
+                    resolved = renderapi.resolvedtiles.ResolvedTiles(
+                            json=jsongz.load(fpath))
+                    self.tform = resolved.transforms[0]
+                    break
+
+
+if __name__ == '__main__':
+    vmod = ViewMatches(input_data=example)
+    vmod.run()
