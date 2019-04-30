@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 example = {
         # these 2 are how the local client (windows or posix) sees these files
-        "fdir": "lctest/T6.2019.04.19.100-140/000109/0/",
+        "fdir": "lctest/T3_OL5pct/005270/0",
         "collection_file": "collection.json.gz",
         "resolved_file": "resolvedtiles_AffineModel_0.json.gz",
         "server_mount": "/data/em-131fs3",  # leave as posix
@@ -29,8 +29,8 @@ example = {
                 "client_scripts": "/allen/aibs/pipeline/image_processing/volume_assembly/render-jars/production/scripts",
                 "validate_client": False
               },
-        "stack": "T7_test",
-        "collection": "T7_test",
+        "stack": "T3_example",
+        "collection": "T3_example",
         "log_level": "INFO"
         }
 
@@ -75,5 +75,5 @@ class SetUpdateUpload(ArgSchemaParser):
 
 
 if __name__ == "__main__":
-    s = SetUpdateUpload(input_data=example, args=[])
+    s = SetUpdateUpload(input_data=example)
     s.run()
