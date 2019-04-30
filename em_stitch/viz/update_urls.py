@@ -76,5 +76,5 @@ class UpdateUrls(ArgSchemaParser):
 
 
 if __name__ == '__main__':
-    u = UpdateUrls(input_data=example, args=[])
+    u = UpdateUrls(input_data=example)
     u.run()

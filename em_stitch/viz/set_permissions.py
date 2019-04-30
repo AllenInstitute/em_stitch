@@ -69,5 +69,5 @@ class SetPermissions(ArgSchemaParser):
 
 
 if __name__ == "__main__":
-    p = SetPermissions(input_data=example, args=[])
+    p = SetPermissions(input_data=example)
     p.run()
