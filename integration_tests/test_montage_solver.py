@@ -57,8 +57,14 @@ def test_solver(solver_input_args):
             j = json.load(f)
         assert len(j) == 2
         for ij in j:
-            assert os.path.isfile(ij['output'])
-            assert os.path.isfile(ij['collection'])
+            assert os.path.isfile(
+                    os.path.join(
+                        ms.args['output_dir'],
+                        ij['output']))
+            assert os.path.isfile(
+                    os.path.join(
+                        ms.args['output_dir'],
+                        ij['collection']))
             for k in ['x', 'y', 'mag']:
                 assert ij[k]['mean'] < 2.0
                 assert ij[k]['stdev'] < 2.0
@@ -83,8 +89,14 @@ def test_solver_no_output_dir(solver_input_args):
             j = json.load(f)
         assert len(j) == 2
         for ij in j:
-            assert os.path.isfile(ij['output'])
-            assert os.path.isfile(ij['collection'])
+            assert os.path.isfile(
+                    os.path.join(
+                        ms.args['output_dir'],
+                        ij['output']))
+            assert os.path.isfile(
+                    os.path.join(
+                        ms.args['output_dir'],
+                        ij['collection']))
             for k in ['x', 'y', 'mag']:
                 assert ij[k]['mean'] < 2.0
                 assert ij[k]['stdev'] < 2.0
@@ -106,8 +118,14 @@ def test_solver_metafile_specify(solver_input_args):
             j = json.load(f)
         assert len(j) == 2
         for ij in j:
-            assert os.path.isfile(ij['output'])
-            assert os.path.isfile(ij['collection'])
+            assert os.path.isfile(
+                    os.path.join(
+                        ms.args['output_dir'],
+                        ij['output']))
+            assert os.path.isfile(
+                    os.path.join(
+                        ms.args['output_dir'],
+                        ij['collection']))
             for k in ['x', 'y', 'mag']:
                 assert ij[k]['mean'] < 2.0
                 assert ij[k]['stdev'] < 2.0
