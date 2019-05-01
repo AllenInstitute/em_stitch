@@ -5,9 +5,15 @@ import os
 import copy
 from EMaligner import jsongz
 from em_stitch.lens_correction.lens_correction_solver import (
-        LensCorrectionSolver, make_collection_json,
-        LensCorrectionException)
+        LensCorrectionSolver, make_collection_json, one_file,
+        LensCorrectionException, tilespec_input_from_metafile)
+from em_stitch.lens_correction.mesh_and_solve_transform import \
+        MeshAndSolveTransform
+from em_stitch.utils.generate_EM_tilespecs_from_metafile import \
+        GenerateEMTileSpecsModule
 from tempfile import TemporaryDirectory
+from marshmallow import ValidationError
+import renderapi
 import glob
 import shutil
 
@@ -30,6 +36,70 @@ def solver_input_args():
                 "lens_solver_example.json",
                 data_dir=data_dir,
                 output_dir=output_dir)
+
+
+@pytest.mark.parametrize('source', ['file', 'memory', 'fail'])
+def test_solve_from_file_and_memory(solver_input_args, source):
+    local_args = copy.deepcopy(solver_input_args)
+    metafile = one_file(local_args['data_dir'], '_metadata*.json')
+    templatefile = one_file(local_args['data_dir'], '_template*.json')
+    compress = True
+    with TemporaryDirectory() as output_dir:
+        tspecin = tilespec_input_from_metafile(
+                metafile,
+                local_args['mask_file'],
+                output_dir,
+                local_args['log_level'],
+                compress)
+        gentspecs = GenerateEMTileSpecsModule(input_data=tspecin, args=[])
+        gentspecs.run()
+        cfile, counts = make_collection_json(
+                templatefile,
+                output_dir,
+                compress,
+                local_args['ransac_thresh'])
+
+        solver_args = {
+                'nvertex': local_args['nvertex'],
+                'regularization': local_args['regularization'],
+                'output_dir': output_dir,
+                'compress_output': compress,
+                'log_level': local_args['log_level']}
+
+        if source == 'file':
+            solver_args['tilespec_file'] = gentspecs.args['output_path']
+            solver_args['match_file'] = cfile
+            solver_args['outfile'] = 'resolvedtiles.json.gz'
+            solver = MeshAndSolveTransform(input_data=solver_args, args=[])
+            solver.run()
+            with open(solver.args['output_json'], 'r') as f:
+                tspec_path = json.load(f)['resolved_tiles']
+            tfile = renderapi.resolvedtiles.ResolvedTiles(
+                    json=jsongz.load(tspec_path))
+            assert (
+                    len(tfile.tilespecs) ==
+                    len(gentspecs.tilespecs) ==
+                    len(solver.resolved.tilespecs))
+        if source == 'memory':
+            solver_args['tilespecs'] = gentspecs.tilespecs
+            solver_args['matches'] = jsongz.load(cfile)
+            solver = MeshAndSolveTransform(input_data=solver_args, args=[])
+            solver.run()
+            assert (
+                    len(gentspecs.tilespecs) ==
+                    len(solver.resolved.tilespecs))
+        if source == 'fail':
+            solver_args['tilespec_file'] = gentspecs.args['output_path']
+            solver_args['tilespecs'] = gentspecs.tilespecs
+            solver_args['matches'] = jsongz.load(cfile)
+            with pytest.raises(ValidationError):
+                MeshAndSolveTransform(input_data=solver_args, args=[])
+            solver_args.pop('tilespecs')
+            solver_args['tilespec_file'] = gentspecs.args['output_path']
+            solver_args['matches'] = jsongz.load(cfile)
+            solver_args['match_file'] = cfile
+            with pytest.raises(ValidationError):
+                MeshAndSolveTransform(input_data=solver_args, args=[])
 
 
 def test_solver(solver_input_args):
