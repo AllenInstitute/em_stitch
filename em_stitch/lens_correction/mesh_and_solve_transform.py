@@ -118,7 +118,7 @@ def create_PSLG(tile_width, tile_height, maskUrl):
         mpath = urllib.parse.unquote(
                     urllib.parse.urlparse(maskUrl).path)
         im = cv2.imread(mpath, 0)
-        contours, h = cv2.findContours(
+        _, contours, _ = cv2.findContours(
                 im, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         approx = approx_snap_contour(contours[0], tile_width, tile_height)
         vertices = np.array(approx).squeeze()
