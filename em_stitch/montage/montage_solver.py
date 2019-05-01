@@ -55,9 +55,10 @@ def do_solve(template_path, args, index):
     # otherwise, we'll need a separate calculation that loads tilespecs
     # and matches to calculate residuals, costing more time
     res = {
-            'args': template_path,
-            'output': aligner.args['output_stack']['output_file'],
-            'collection': aligner.args['pointmatch']['input_file'],
+            'output': os.path.basename(
+                aligner.args['output_stack']['output_file']),
+            'collection': os.path.basename(
+                aligner.args['pointmatch']['input_file']),
             'x': {
                 'mean': aligner.results['err'][0][0],
                 'stdev': aligner.results['err'][0][1]
