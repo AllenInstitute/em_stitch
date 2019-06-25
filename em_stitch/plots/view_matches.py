@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 import logging
-from lens_correction.utils import maps_from_tform
+from em_stitch.lens_correction.utils import maps_from_tform
 from EMaligner import jsongz
 import renderapi
 import cv2
@@ -40,7 +40,7 @@ def plot_ims_and_coords(
         pim, qim, p, q, w, pname=None, qname=None, fignum=1, tform=None):
     if tform:
         map1, map2, mask = maps_from_tform(
-                tform, pim.shape[1], pim.shape[0], logger)
+                tform, pim.shape[1], pim.shape[0])
         pim = cv2.remap(pim, map1, map2, cv2.INTER_NEAREST)
         qim = cv2.remap(qim, map1, map2, cv2.INTER_NEAREST)
 
