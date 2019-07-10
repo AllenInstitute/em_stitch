@@ -89,21 +89,22 @@ class UploadToRender(ArgSchemaParser):
                 self.args['fdir'],
                 self.args['resolved_file'])
 
-        collection_file = os.path.join(
-                self.args['client_mount_or_map'],
-                self.args['fdir'],
-                self.args['collection_file'])
-
         upload_resolved_file(
                 self.args['render'],
                 self.args['stack'],
                 resolved_file,
                 self.args['close_stack'])
 
-        upload_collection_file(
-                self.args['render'],
-                self.args['collection'],
-                collection_file)
+        if self.args['collection_file']:
+            collection_file = os.path.join(
+                    self.args['client_mount_or_map'],
+                    self.args['fdir'],
+                    self.args['collection_file'])
+
+            upload_collection_file(
+                    self.args['render'],
+                    self.args['collection'],
+                    collection_file)
 
 
 if __name__ == "__main__":

@@ -98,6 +98,7 @@ class UploadToRenderSchema(common_schema, resolved_schema):
         description="name of destination stack in render")
     collection = Str(
         required=False,
+        missing=None,
         description="name of destination collection in render")
     collection_file = Str(
         required=False,
