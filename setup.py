@@ -28,10 +28,6 @@ with open('test_requirements.txt', 'r') as f:
 
 with open('requirements.txt', 'r') as f:
     required = f.read().splitlines()
-print("hacky thing for emaligner dev branch. fix me.")
-for i in range(len(required)):
-    if required[i][0:2] == "-e":
-        required[i] = "emaligner"
 
 setup(name='em_stitch',
       use_scm_version=True,
