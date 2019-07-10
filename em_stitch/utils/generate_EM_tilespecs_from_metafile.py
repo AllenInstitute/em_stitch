@@ -102,7 +102,8 @@ class GenerateEMTileSpecsModule(ArgSchemaParser):
                     pixelsize=pixelsize,
                     maskUrl=self.args['maskUrl']) for img in imgdata]
 
-        self.args['output_path'] = jsongz.dump(
+        if 'output_path' in self.args:
+            self.args['output_path'] = jsongz.dump(
                 self.tilespecs,
                 self.args['output_path'],
                 self.args['compress_output'])

@@ -161,10 +161,10 @@ class LensCorrectionSolver(ArgSchemaParser):
                 'nvertex': self.args['nvertex'],
                 'regularization': self.args['regularization'],
                 'good_solve': self.args['good_solve'],
-                'tilespec_file': gentspecs.args['output_path'],
+                'tilespecs': gentspecs.tilespecs,
                 'match_file': collection_path,
                 'output_dir': self.output_dir,
-                'outfile': 'lens_correction_transform.json',
+                'outfile': 'resolvedtiles.json.gz',
                 'compress_output': self.args['compress_output'],
                 'log_level': self.args['log_level']}
 
@@ -199,7 +199,6 @@ class LensCorrectionSolver(ArgSchemaParser):
         res['output']['resolved_tiles'] = j.pop('resolved_tiles')
         res['output']['mask'] = os.path.abspath(maskname)
         res['output']['collection'] = os.path.abspath(collection_path)
-        res['output']['lens_json'] = os.path.abspath(self.solver.tfpath)
         res['residual stats'] = j
 
         self.args['output_json'] = self.solver.args['output_json']

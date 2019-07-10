@@ -118,7 +118,7 @@ def create_PSLG(tile_width, tile_height, maskUrl):
         mpath = urllib.parse.unquote(
                     urllib.parse.urlparse(maskUrl).path)
         im = cv2.imread(mpath, 0)
-        contours, h = cv2.findContours(
+        _, contours, _ = cv2.findContours(
                 im, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         approx = approx_snap_contour(contours[0], tile_width, tile_height)
         vertices = np.array(approx).squeeze()
@@ -236,17 +236,13 @@ def create_regularization(ncols, ntiles, defaultL, transL, lensL):
 
 def create_thinplatespline_tf(
         args, mesh, solution,
-        lens_dof_start, common_transform,
+        lens_dof_start,
         logger,
         compute_affine=False):
 
     dst = np.zeros_like(mesh.points)
     dst[:, 0] = mesh.points[:, 0] + solution[0][lens_dof_start:]
     dst[:, 1] = mesh.points[:, 1] + solution[1][lens_dof_start:]
-
-    if common_transform is not None:
-        # average affine result
-        dst = common_transform.tform(dst)
 
     transform = renderapi.transform.ThinPlateSplineTransform()
     transform.estimate(mesh.points, dst, computeAffine=compute_affine)
@@ -418,29 +414,13 @@ def create_A(matches, tilespecs, mesh):
     return A, wts, b, lens_dof_start
 
 
-def create_transforms(ntiles, solution, get_common=False):
+def create_transforms(ntiles, solution):
     rtransforms = []
     for i in range(ntiles):
         rtransforms.append(renderapi.transform.AffineModel(
                            B0=solution[0][i],
                            B1=solution[1][i]))
-
-    if get_common:
-        transforms = []
-        # average without translations
-        common = np.array([t.M for t in rtransforms]).mean(0)
-        common[0, 2] = 0.0
-        common[1, 2] = 0.0
-        for r in rtransforms:
-            transforms.append(renderapi.transform.AffineModel())
-            transforms[-1].M = r.M.dot(np.linalg.inv(common))
-        ctform = renderapi.transform.AffineModel()
-        ctform.M = common
-    else:
-        ctform = None
-        transforms = rtransforms
-
-    return ctform, transforms
+    return rtransforms
 
 
 def estimate_stage_affine(t0, t1):
@@ -455,11 +435,18 @@ class MeshAndSolveTransform(ArgSchemaParser):
     default_schema = MeshLensCorrectionSchema
 
     def run(self):
-        jspecs = jsongz.load(self.args['tilespec_file'])
+        if 'tilespecs' in self.args:
+            jspecs = self.args['tilespecs']
+        else:
+            jspecs = jsongz.load(self.args['tilespec_file'])
+
         self.tilespecs = np.array([
                 renderapi.tilespec.TileSpec(json=j) for j in jspecs])
 
-        self.matches = jsongz.load(self.args['match_file'])
+        if 'matches' in self.args:
+            self.matches = self.args['matches']
+        else:
+            self.matches = jsongz.load(self.args['match_file'])
 
         remove_weighted_matches(self.matches, weight=0.0)
 
@@ -538,7 +525,7 @@ class MeshAndSolveTransform(ArgSchemaParser):
                 self.x0,
                 self.b)
 
-        self.common_transform, self.transforms = create_transforms(
+        self.transforms = create_transforms(
                 len(self.tilespecs), self.solution)
 
         tf_trans, jresult, self.solve_message = report_solution(
@@ -573,7 +560,6 @@ class MeshAndSolveTransform(ArgSchemaParser):
                 self.mesh,
                 self.solution,
                 self.lens_dof_start,
-                self.common_transform,
                 self.logger)
 
         bbox = self.tilespecs[0].bbox_transformed(tf_limit=0)
@@ -584,11 +570,6 @@ class MeshAndSolveTransform(ArgSchemaParser):
                     bbox[i, 0], bbox[i, 1],
                     tbbox[i, 0], tbbox[i, 1])
         self.logger.info(bstr)
-
-        self.tfpath = os.path.join(
-                self.args['output_dir'], self.args['outfile'])
-        jsongz.dump(
-                self.new_ref_transform.to_dict(), self.tfpath, compress=False)
 
         new_tilespecs = new_specs_with_tf(
             self.new_ref_transform,
@@ -603,28 +584,28 @@ class MeshAndSolveTransform(ArgSchemaParser):
         sastr += "  rotation: {}\n".format(np.degrees(stage_affine.rotation))
         self.logger.info(sastr)
 
-        new_path = os.path.join(
-                self.args['output_dir'],
-                'resolvedtiles.json')
-
-        resolved = renderapi.resolvedtiles.ResolvedTiles(
+        self.resolved = renderapi.resolvedtiles.ResolvedTiles(
                 tilespecs=new_tilespecs,
                 transformList=[self.new_ref_transform])
 
-        new_path = jsongz.dump(
-                resolved.to_dict(),
-                new_path,
-                compress=self.args['compress_output'])
+        new_path = None
+        if 'outfile' in self.args:
+            new_path = jsongz.dump(
+                    self.resolved.to_dict(),
+                    os.path.join(
+                        self.args['output_dir'],
+                        self.args['outfile']),
+                    compress=self.args['compress_output'])
+            new_path = os.path.abspath(new_path)
 
         self.args['output_json'] = os.path.join(
                 self.args['output_dir'],
                 'output.json')
 
-        jresult['resolved_tiles'] = os.path.abspath(new_path)
+        jresult['resolved_tiles'] = new_path
 
         self.output(jresult, indent=2)
 
-        self.logger.info(" wrote solved tilespecs:\n  %s" %
-                         self.args['output_json'])
+        self.logger.info(" wrote solved tilespecs:\n  %s" % new_path)
 
         return

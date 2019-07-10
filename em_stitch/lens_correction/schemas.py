@@ -1,10 +1,11 @@
 import warnings
 from marshmallow.warnings import ChangedInMarshmallow3Warning
+import marshmallow as mm
 from argschema import ArgSchema
 from argschema.schemas import DefaultSchema
 from argschema.fields import (
         Boolean, InputDir, InputFile, Float, List,
-        Int, OutputDir, Nested, Str)
+        Int, OutputDir, Nested, Str, Dict)
 warnings.simplefilter(
         action='ignore',
         category=ChangedInMarshmallow3Warning)
@@ -53,21 +54,26 @@ class MeshLensCorrectionSchema(ArgSchema):
         missinf=1000,
         description="maximum number of vertices to attempt")
     tilespec_file = InputFile(
-        required=True,
-        missing="",
-        description="json of tilespecs")
+        required=False,
+        description="path to json of tilespecs")
+    tilespecs = List(
+        Dict,
+        required=False,
+        description="list of dict of tilespecs")
     match_file = InputFile(
-        required=True,
-        missing="",
-        description="json of matches")
+        required=False,
+        description="path to json of matches")
+    matches = List(
+        Dict,
+        required=False,
+        description="list of dict of matches")
     regularization = Nested(regularization, missing={})
     good_solve = Nested(good_solve_criteria, missing={})
     output_dir = OutputDir(
         required=False,
         description="directory for output files")
     outfile = Str(
-        required=True,
-        missing="tmp_transform_out.json",
+        required=False,
         description=("File to which json output of lens correction "
                      "(leaf TransformSpec) is written"))
     compress_output = Boolean(
@@ -75,6 +81,15 @@ class MeshLensCorrectionSchema(ArgSchema):
         missing=True,
         default=True,
         description=("tilespecs will be .json or .json.gz"))
+
+    @mm.post_load
+    def one_of_two(self, data):
+        for a, b in [
+                ['tilespecs', 'tilespec_file'],
+                ['matches', 'match_file']]:
+            if (a in data) == (b in data):  # xor
+                raise mm.ValidationError(
+                        'must specify one and only one of %s or %s' % (a, b))
 
 
 class LensCorrectionSchema(ArgSchema):
