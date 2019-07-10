@@ -47,9 +47,7 @@ with open('test_requirements.txt', 'r') as f:
 
 with open('requirements.txt', 'r') as f:
     required = f.read().splitlines()
-    print(required)
     required.append(opencv_mess())
-    print(required)
 
 setup(name='em_stitch',
       use_scm_version=True,
