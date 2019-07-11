@@ -28,7 +28,7 @@ def opencv_mess():
         import cv2
         r = cv2.xfeatures2d
         ver = cv2.__version__
-    except ModuleNotFoundError:
+    except ImportError:
         # no opencv is installed, we don't need contrib
         required = 'opencv-python<=3.4.5'
     except AttributeError:
