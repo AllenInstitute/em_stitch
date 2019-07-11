@@ -22,12 +22,32 @@ class PyTest(TestCommand):
         errno = pytest.main(shlex.split(self.pytest_args))
         sys.exit(errno)
 
+def opencv_mess():
+    ver = None
+    try:
+        import cv2
+        r = cv2.xfeatures2d
+        ver = cv2.__version__
+    except ImportError:
+        # no opencv is installed, we don't need contrib
+        required = 'opencv-python<=3.4.5'
+    except AttributeError:
+        # someone has opencv installed (but not contrib)
+        # let's require some version
+        required = 'opencv-python<=3.4.5'
+    if ver:
+        # opencv-contrib-python is installed
+        # let's require some version
+        required = 'opencv-contrib-python<3.4.3.0'
+    return required
+
 
 with open('test_requirements.txt', 'r') as f:
     test_required = f.read().splitlines()
 
 with open('requirements.txt', 'r') as f:
     required = f.read().splitlines()
+    required.append(opencv_mess())
 
 setup(name='em_stitch',
       use_scm_version=True,
