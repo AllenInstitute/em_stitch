@@ -102,8 +102,10 @@ def test_solve_from_file_and_memory(solver_input_args, source):
                 MeshAndSolveTransform(input_data=solver_args, args=[])
 
 
-def test_solver(solver_input_args):
+@pytest.mark.parametrize("timestamp", [True, False])
+def test_solver(solver_input_args, timestamp):
     local_args = copy.deepcopy(solver_input_args)
+    local_args['timestamp'] = timestamp
     with TemporaryDirectory() as output_dir:
         local_args['output_dir'] = output_dir
         lcs = LensCorrectionSolver(input_data=local_args, args=[])

@@ -255,7 +255,7 @@ def create_thinplatespline_tf(
             (npts0, npts1))
 
     transform.transformId = (
-            datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
+            datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")[:-3])
     transform.labels = None
 
     return transform
@@ -590,17 +590,26 @@ class MeshAndSolveTransform(ArgSchemaParser):
 
         new_path = None
         if 'outfile' in self.args:
+            fname = self.args['outfile']
+            if self.args['timestamp']:
+                spf = fname.split(os.extsep, 1)
+                spf[0] += '_%s' % self.new_ref_transform.transformId
+                fname = os.extsep.join(spf)
             new_path = jsongz.dump(
                     self.resolved.to_dict(),
                     os.path.join(
                         self.args['output_dir'],
-                        self.args['outfile']),
+                        fname),
                     compress=self.args['compress_output'])
             new_path = os.path.abspath(new_path)
 
+        fname = 'output.json'
+        if self.args['timestamp']:
+            fname = 'output_%s.json' % self.new_ref_transform.transformId
+
         self.args['output_json'] = os.path.join(
                 self.args['output_dir'],
-                'output.json')
+                fname)
 
         jresult['resolved_tiles'] = new_path
 
