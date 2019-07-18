@@ -74,13 +74,18 @@ class MeshLensCorrectionSchema(ArgSchema):
         description="directory for output files")
     outfile = Str(
         required=False,
-        description=("File to which json output of lens correction "
-                     "(leaf TransformSpec) is written"))
+        description=("Basename to which resolved json output of "
+                     "lens correction is written"))
     compress_output = Boolean(
         required=False,
         missing=True,
         default=True,
         description=("tilespecs will be .json or .json.gz"))
+    timestamp = Boolean(
+        required=False,
+        missing=False,
+        default=False,
+        description="add a timestamp to basename output")
 
     @mm.post_load
     def one_of_two(self, data):
@@ -128,3 +133,8 @@ class LensCorrectionSchema(ArgSchema):
         missing=True,
         default=True,
         description=("tilespecs will be .json or .json.gz"))
+    timestamp = Boolean(
+        required=False,
+        missing=False,
+        default=False,
+        description="add a timestamp to basename output")

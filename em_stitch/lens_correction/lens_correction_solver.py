@@ -166,7 +166,8 @@ class LensCorrectionSolver(ArgSchemaParser):
                 'output_dir': self.output_dir,
                 'outfile': 'resolvedtiles.json.gz',
                 'compress_output': self.args['compress_output'],
-                'log_level': self.args['log_level']}
+                'log_level': self.args['log_level'],
+                'timestamp': self.args['timestamp']}
 
         self.solver = MeshAndSolveTransform(input_data=solver_args, args=[])
         self.solver.run()
