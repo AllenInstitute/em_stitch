@@ -5,7 +5,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import renderapi
 import numpy as np
 import json
-from EMaligner import jsongz
+from bigfeta import jsongz
 from em_stitch.plots.schemas import MontagePlotsSchema
 import os
 

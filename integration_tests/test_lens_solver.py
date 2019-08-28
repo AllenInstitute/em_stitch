@@ -3,7 +3,7 @@ import json
 import pytest
 import os
 import copy
-from EMaligner import jsongz
+from bigfeta import jsongz
 from em_stitch.lens_correction.lens_correction_solver import (
         LensCorrectionSolver, make_collection_json, one_file,
         LensCorrectionException, tilespec_input_from_metafile)

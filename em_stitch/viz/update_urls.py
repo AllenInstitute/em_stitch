@@ -2,7 +2,7 @@ import os
 import shutil
 from six.moves import urllib
 import pathlib
-from EMaligner import jsongz
+from bigfeta import jsongz
 from argschema import ArgSchemaParser
 from .schemas import UpdateUrlSchema
 import renderapi

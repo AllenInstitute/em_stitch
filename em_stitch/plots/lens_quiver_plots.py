@@ -11,7 +11,7 @@ import datetime
 from em_stitch.utils.utils import src_from_xy
 from em_stitch.plots.schemas import LensQuiverSchema
 from argschema import ArgSchemaParser
-from EMaligner import jsongz
+from bigfeta import jsongz
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 example = {

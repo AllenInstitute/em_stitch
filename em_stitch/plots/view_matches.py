@@ -4,7 +4,7 @@ import os
 import numpy as np
 import logging
 from em_stitch.lens_correction.utils import maps_from_tform
-from EMaligner import jsongz
+from bigfeta import jsongz
 import renderapi
 import cv2
 from em_stitch.plots.schemas import ViewMatchesSchema
