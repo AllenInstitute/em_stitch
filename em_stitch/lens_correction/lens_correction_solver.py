@@ -5,7 +5,7 @@ from ..utils.generate_EM_tilespecs_from_metafile import \
 from ..utils import utils as common_utils
 from .mesh_and_solve_transform import MeshAndSolveTransform
 from . import utils
-from EMaligner import jsongz
+from bigfeta import jsongz
 import logging
 import os
 import glob

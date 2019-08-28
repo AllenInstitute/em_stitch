@@ -1,7 +1,7 @@
 from argschema import ArgSchemaParser
 import renderapi
 from .schemas import UploadToRenderSchema
-from EMaligner import jsongz
+from bigfeta import jsongz
 import os
 import logging
 

@@ -3,7 +3,7 @@ import os
 import json
 import numpy
 import pathlib
-from EMaligner import jsongz
+from bigfeta import jsongz
 from argschema import ArgSchemaParser
 from .schemas import GenerateEMTileSpecsParameters
 

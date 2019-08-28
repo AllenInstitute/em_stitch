@@ -5,8 +5,8 @@ from em_stitch.montage.schemas import MontageSolverSchema
 from em_stitch.utils.generate_EM_tilespecs_from_metafile import \
         GenerateEMTileSpecsModule
 from em_stitch.utils.utils import pointmatch_filter, get_z_from_metafile
-from EMaligner import jsongz
-import EMaligner.EMaligner as ema
+from bigfeta import jsongz
+import bigfeta.bigfeta as bfa
 import json
 import os
 import glob
@@ -48,7 +48,7 @@ def do_solve(template_path, args, index):
             'resolvedtiles_%s_%d.json' % (template['transformation'], index))
     template['output_stack']['output_file'] = fname
     template['fullsize_transform'] = False
-    aligner = ema.EMaligner(input_data=template, args=[])
+    aligner = bfa.BigFeta(input_data=template, args=[])
     aligner.run()
     # these numbers only meaningful for fullsize_transform = False
     # to get results already in memory, on-scope, let's keep it that way

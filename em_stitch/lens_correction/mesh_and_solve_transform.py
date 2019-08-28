@@ -14,7 +14,7 @@ from six.moves import urllib
 from argschema import ArgSchemaParser
 from .schemas import MeshLensCorrectionSchema
 from .utils import remove_weighted_matches
-from EMaligner import jsongz
+from bigfeta import jsongz
 import logging
 
 # this is a modification of https://github.com/
