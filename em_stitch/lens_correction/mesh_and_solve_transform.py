@@ -1,4 +1,3 @@
-import time
 import numpy as np
 import triangle
 import scipy.optimize
@@ -418,7 +417,7 @@ def create_x0(nrows, tilespecs):
     return x0
 
 
-def create_A(matches, tilespecs, mesh):
+def create_A(matches, tilespecs, mesh, **kwargs):
     # let's assume translation halfsize
     dof_per_tile = 1
     dof_per_vertex = 1
@@ -462,8 +461,8 @@ def create_A(matches, tilespecs, mesh):
 
         b[rows: (rows + pcoords.shape[0])] = qcoords - pcoords
         rows += pcoords.shape[0]
-        pbary = compute_barycentrics(pcoords, mesh)
-        qbary = compute_barycentrics(qcoords, mesh)
+        pbary = compute_barycentrics(pcoords, mesh, **kwargs)
+        qbary = compute_barycentrics(qcoords, mesh, **kwargs)
 
         mstep = np.arange(npoint_pairs) * nnz_per_row + offset
 
