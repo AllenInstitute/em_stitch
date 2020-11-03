@@ -55,6 +55,29 @@ def condense_coords(matches):
 
 
 def smooth_density_legacy(coords, tile_width, tile_height, n):
+    """legacy function to homogenize distribution of points within a
+        rectangular area by reducing the number of points within
+        n**2 equally-sized bounding boxes to
+        the minimum number of points in one of those boxes.
+
+
+    Parameters
+    ----------
+    coords : numpy.ndarray
+        Nx2 numpy array of coordinates to consider
+    tile_width : int
+        width of rectangular area containing coords
+    tile_height : int
+        height of rectangular area containing coords
+    n : int
+        number of subdivisions into which tile_width and tile_height
+        should be divided
+
+    Returns
+    -------
+    smoothed_coords : numpy.ndarray
+        Nx2 numpy array of smoothed subset of input coords
+    """
     # n: area divided into nxn
     min_count = np.Inf
     for i in range(n):
@@ -94,6 +117,25 @@ def smooth_density_legacy(coords, tile_width, tile_height, n):
 
 
 def get_bboxes(tile_width, tile_height, n):
+    """get list of bounds for n**2 equally-sized bounding boxes within a
+        rectangular bounding box
+
+
+    Parameters
+    ----------
+    tile_width : int
+        width of rectangular area to divide
+    tile_height : int
+        height of rectangular area to divide
+    n : int
+        number of subdivisions into which tile_width and tile_height
+        should be divided
+
+    Returns
+    -------
+    vtxs : list of tuple of numpy.ndarray
+        list of min/max tuples of vertices representing bounding boxes
+    """
     numX = n
     numY = n
     diffX = (tile_width-1) / numX
@@ -112,6 +154,28 @@ def get_bboxes(tile_width, tile_height, n):
 
 
 def smooth_density_bbox(coords, tile_width, tile_height, n):
+    """homogenize distribution of points within a rectangular area by reducing
+        the number of points within n**2 equally-sized bounding boxes to
+        the minimum number of points in one of those boxes.
+
+
+    Parameters
+    ----------
+    coords : numpy.ndarray
+        Nx2 numpy array of coordinates to consider
+    tile_width : int
+        width of rectangular area containing coords
+    tile_height : int
+        height of rectangular area containing coords
+    n : int
+        number of subdivisions into which tile_width and tile_height
+        should be divided
+
+    Returns
+    -------
+    smoothed_coords : numpy.ndarray
+        Nx2 numpy array of smoothed subset of input coords
+    """
     vtxs = get_bboxes(tile_width, tile_height, n)
 
     index_arr = np.zeros(coords.shape[0], dtype="int64")
@@ -132,6 +196,30 @@ def smooth_density_bbox(coords, tile_width, tile_height, n):
 
 def smooth_density(coords, tile_width, tile_height, n,
                    legacy_smooth_density=False, **kwargs):
+    """homogenize distribution of points within a rectangular area by reducing
+        the number of points within n**2 equally-sized bounding boxes to
+        the minimum number of points in one of those boxes.
+
+
+    Parameters
+    ----------
+    coords : numpy.ndarray
+        Nx2 numpy array of coordinates to consider
+    tile_width : int
+        width of rectangular area containing coords
+    tile_height : int
+        height of rectangular area containing coords
+    n : int
+        number of subdivisions into which tile_width and tile_height
+        should be divided
+    legacy_smooth_density : boolean
+        whether to use (slower) legacy code.  Not recommended.
+
+    Returns
+    -------
+    smoothed_coords : numpy.ndarray
+        Nx2 numpy array of smoothed subset of input coords
+    """
     if legacy_smooth_density:
         return smooth_density_legacy(coords, tile_width, tile_height, n)
     else:
@@ -198,6 +286,28 @@ def calculate_mesh(a, bbox, target, get_t=False):
 
 
 def force_vertices_with_npoints(area_par, bbox, coords, npts, **kwargs):
+    """create a triangular mesh which iteratively attempts to conform to a
+        minimum number of points per vertex by adjusting the maximum
+        triangle area
+
+    Parameters
+    ----------
+    area_par : float
+        initial maximum triangle area constraint for triangle.triangulate
+    bbox : dict
+        PSLG bounding box dictionary from :func:create_PSLG
+    coords : numpy.ndarray
+        Nx2 points
+    npts : int
+        minimum number of points near each vertex
+
+    Returns
+    -------
+    t : scipy.spatial.qhull.Delaunay
+        triangle mesh with minimum point count near vertices
+    area_par : float
+        area parameter used to calculate result t
+    """
     fac = 1.02
     count = 0
     max_iter = 20
@@ -248,6 +358,22 @@ def find_delaunay_with_max_vertices(bbox, nvertex):
 
 
 def compute_barycentrics_legacy(coords, mesh):
+    """legacy function to compute barycentric coordinates on mesh
+
+    Parameters
+    ----------
+    coords : numpy.ndarray
+        Nx2 array of points
+    mesh : scipy.spatial.qhull.Delaunay
+        triangular mesh
+
+    Returns
+    -------
+    bcoords : numpy.ndarray
+        Nx2 array of barycentric coordinates
+    triangle_indices : numpy.ndarray
+        simplex indices of barycentric coordinates
+    """
     # https://en.wikipedia.org/wiki/Barycentric_coordinate_system#Conversion_between_barycentric_and_Cartesian_coordinates
     triangle_indices = mesh.find_simplex(coords)
     vt = np.vstack((
@@ -265,6 +391,22 @@ def compute_barycentrics_legacy(coords, mesh):
 
 
 def compute_barycentrics_native(coords, mesh):
+    """convert coordinates to barycentric coordinates on mesh
+
+    Parameters
+    ----------
+    coords : numpy.ndarray
+        Nx2 array of points
+    mesh : scipy.spatial.qhull.Delaunay
+        triangular mesh
+
+    Returns
+    -------
+    bcoords : numpy.ndarray
+        Nx2 array of barycentric coordinates
+    triangle_indices : numpy.ndarray
+        simplex indices of barycentric coordinates
+    """
     triangle_indices = mesh.find_simplex(coords)
     X = mesh.transform[triangle_indices, :2]
     Y = coords - mesh.transform[triangle_indices, 2]
@@ -274,6 +416,24 @@ def compute_barycentrics_native(coords, mesh):
 
 
 def compute_barycentrics(coords, mesh, legacy_barycentrics=False, **kwargs):
+    """convert coordinates to barycentric coordinates on mesh
+
+    Parameters
+    ----------
+    coords : numpy.ndarray
+        Nx2 array of points
+    mesh : scipy.spatial.qhull.Delaunay
+        triangular mesh
+    legacy_barycentrics : boolean
+        whether to use (slower) legacy method to find barycentrics.
+
+    Returns
+    -------
+    bcoords : numpy.ndarray
+        Nx2 array of barycentric coordinates
+    triangle_indices : numpy.ndarray
+        simplex indices of barycentric coordinates
+    """
     if legacy_barycentrics:
         return compute_barycentrics_legacy(coords, mesh)
     else:
@@ -283,6 +443,24 @@ def compute_barycentrics(coords, mesh, legacy_barycentrics=False, **kwargs):
 def count_points_near_vertices(
         t, coords, bruteforce_simplex_counts=False,
         count_bincount=True, **kwargs):
+    """enumerate coordinates closest to the vertices in a mesh
+
+    Parameters
+    ----------
+    t : scipy.spatial.qhull.Delaunay
+        triangular mesh
+    coords : numpy.ndarray
+        Nx2 array of points to assign to vertices on t
+    bruteforce_simplex_counts : boolean
+        whether to do a bruteforce simplex finding
+    count_bincount : boolean
+       use numpy.bincount based counting rather than legacy counting
+
+    Returns
+    -------
+    pt_count : numpy.ndarray
+        array with counts of points corresponding to indices of vertices in t
+    """
     flat_tri = t.simplices.flatten()
     flat_ind = np.repeat(np.arange(t.nsimplex), 3)
     v_touches = []
@@ -352,6 +530,38 @@ def new_specs_with_tf(ref_transform, tilespecs, transforms):
 
 def solve(A, weights, reg, x0, b, precomputed_ATW=None, precomputed_ATWA=None,
           precomputed_K_factorized=None):
+    """regularized weighted solve
+
+    Parameters
+    ----------
+    A : :class:`scipy.sparse.csr`
+        the matrix, N (equations) x M (degrees of freedom)
+    weights : :class:`scipy.sparse.csr_matrix`
+        N x N diagonal matrix containing weights
+    reg : :class:`scipy.sparse.csr_matrix`
+        M x M diagonal matrix containing regularizations
+    x0 : :class:`numpy.ndarray`
+        M x nsolve float constraint values for the DOFs
+    b : :class:`numpy.ndarray`:
+        N x nsolve float right-hand-side(s)
+    precomputed_ATW : :class:`scipy.sparse.csc_matrix`
+        value to use rather than computing A.T.dot(weights)
+    precomputed_ATWA : :class:`scipy.sparse.csc_matrix`
+        value to use rather than computing A.T.dot(weights).dot(A)
+    precomputed_K_factorized : func
+        factorized solve function to use rather than computing
+        scipy.sparse.linalg.factorized(A.T.dot(weights).dot(A) + reg)
+
+    Returns
+    -------
+    solution : list of numpy.ndarray
+        list of numpy arrays of x and y vertex positions of solution
+    errx : numpy.ndarray
+        numpy array of x residuals
+    erry : numpy.ndarray
+        numpy array of y residuals
+
+    """
     ATW = (A.transpose().dot(weights)
            if precomputed_ATW is None else precomputed_ATW)
     if precomputed_K_factorized is None:
@@ -518,6 +728,30 @@ def estimate_stage_affine(t0, t1):
 
 def _create_mesh(resolvedtiles, matches, nvertex,
                  return_area_triangle_par=False, **kwargs):
+    """create mesh with a given number of vertices based on example tiles
+        and pointmatches
+
+    Parameters
+    ----------
+    resolvedtiles : renderapi.resolvedtiles.ResolvedTiles
+        resolvedtiles containing a tilespec with mask, width, and height
+        properties to use as a template for the mesh
+    matches : list of dict
+        list of point correspondences in render pointmatch format
+    nvertex : int
+        number of vertices for mesh
+    return_area_triangle_par : boolean
+        whether to return the area parameter used to generate the
+        triangular mesh
+
+    Returns
+    -------
+    mesh : scipy.spatial.qhull.Delaunay
+        triangular mesh
+    area_triangle_par : float
+        max area constraint used in generating mesh
+    """
+
     remove_weighted_matches(matches, weight=0.0)
 
     tilespecs = resolvedtiles.tilespecs
@@ -566,6 +800,35 @@ def _solve_resolvedtiles(
         regularization_translation_factor, regularization_lens_lambda,
         good_solve_dict,
         logger=default_logger, **kwargs):
+    """generate lens correction from resolvedtiles and pointmatches
+
+    Parameters
+    ----------
+    resolvedtiles : renderapi.resolvedtiles.ResolvedTiles
+        resolvedtiles object on which transformation will be computed
+    matches : list of dict
+         point correspondences to consider in render pointmatch format
+    nvertex :
+        number of vertices in mesh
+    regularization_lambda :  float
+        lambda value for affine regularization
+    regularization_translation_factor :  float
+        translation factor of regularization
+    regularization_lens_lambda :  float
+        lambda value for lens regularization
+    good_solve_dict :
+        dictionary to define when a solve fails
+    logger : logging.Logger
+        logger to use in reporting
+    Returns
+    -------
+    resolved : renderapi.resolvedtiles.ResolvedTiles
+        new resolvedtiles object with derived lens correction applied
+    new_ref_transform : renderapi.transform.leaf.ThinPlateSplineTransform
+        derived lens correction transform
+    jresult : dict
+        dictionary of solve information
+    """
 
     # FIXME this is done twice -- think through
     tilespecs = resolvedtiles.tilespecs
@@ -654,6 +917,17 @@ class MeshAndSolveTransform(ArgSchemaParser):
     default_schema = MeshLensCorrectionSchema
 
     def solve_resolvedtiles_from_args(self):
+        """use arguments to run lens correction
+
+        Returns
+        -------
+        resolved : renderapi.resolvedtiles.ResolvedTiles
+            new resolvedtiles object with derived lens correction applied
+        new_ref_transform : renderapi.transform.leaf.ThinPlateSplineTransform
+            derived lens correction transform
+        jresult : dict
+            dictionary of solve information
+        """
         if 'tilespecs' in self.args:
             jspecs = self.args['tilespecs']
         else:
@@ -679,7 +953,6 @@ class MeshAndSolveTransform(ArgSchemaParser):
             )
 
     def run(self):
-
         self.resolved, self.new_ref_transform, jresult = (
             self.solve_resolvedtiles_from_args())
 
