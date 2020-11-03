@@ -17,6 +17,14 @@ from .utils import remove_weighted_matches
 from bigfeta import jsongz
 import logging
 
+try:
+    # pandas unique is faster than numpy, use where appropriate
+    import pandas
+    _uniq = pandas.unique
+except ImportError:
+    import numpy
+    _uniq = numpy.unique
+
 # this is a modification of https://github.com/
 # AllenInstitute/render-modules/blob/master/
 # rendermodules/mesh_lens_correction/MeshAndSolveTransform.py
@@ -24,6 +32,7 @@ import logging
 # on a running render server
 
 logger = logging.getLogger()
+default_logger = logger
 
 
 class MeshLensCorrectionException(Exception):
@@ -45,7 +54,30 @@ def condense_coords(matches):
     return coords
 
 
-def smooth_density(coords, tile_width, tile_height, n):
+def smooth_density_legacy(coords, tile_width, tile_height, n):
+    """legacy function to homogenize distribution of points within a
+        rectangular area by reducing the number of points within
+        n**2 equally-sized bounding boxes to
+        the minimum number of points in one of those boxes.
+
+
+    Parameters
+    ----------
+    coords : numpy.ndarray
+        Nx2 numpy array of coordinates to consider
+    tile_width : int
+        width of rectangular area containing coords
+    tile_height : int
+        height of rectangular area containing coords
+    n : int
+        number of subdivisions into which tile_width and tile_height
+        should be divided
+
+    Returns
+    -------
+    smoothed_coords : numpy.ndarray
+        Nx2 numpy array of smoothed subset of input coords
+    """
     # n: area divided into nxn
     min_count = np.Inf
     for i in range(n):
@@ -82,6 +114,116 @@ def smooth_density(coords, tile_width, tile_height, n):
             ind = ind[a[0:min_count]]
             new_coords.append(coords[ind])
     return np.concatenate(new_coords)
+
+
+def get_bboxes(tile_width, tile_height, n):
+    """get list of bounds for n**2 equally-sized bounding boxes within a
+        rectangular bounding box
+
+
+    Parameters
+    ----------
+    tile_width : int
+        width of rectangular area to divide
+    tile_height : int
+        height of rectangular area to divide
+    n : int
+        number of subdivisions into which tile_width and tile_height
+        should be divided
+
+    Returns
+    -------
+    vtxs : list of tuple of numpy.ndarray
+        list of min/max tuples of vertices representing bounding boxes
+    """
+    numX = n
+    numY = n
+    diffX = (tile_width-1) / numX
+    diffY = (tile_height-1) / numY
+
+    squaremesh = np.mgrid[
+        0:tile_width-1:numX*1j, 0:tile_height-1:numY*1j].reshape(2, -1).T
+    maxpt = squaremesh.max(axis=0)
+
+    vtxs = []
+    for pt in squaremesh:
+        if np.any(pt == maxpt):
+            continue
+        vtxs.append((pt, pt + np.array([diffX, diffY])))
+    return vtxs
+
+
+def smooth_density_bbox(coords, tile_width, tile_height, n):
+    """homogenize distribution of points within a rectangular area by reducing
+        the number of points within n**2 equally-sized bounding boxes to
+        the minimum number of points in one of those boxes.
+
+
+    Parameters
+    ----------
+    coords : numpy.ndarray
+        Nx2 numpy array of coordinates to consider
+    tile_width : int
+        width of rectangular area containing coords
+    tile_height : int
+        height of rectangular area containing coords
+    n : int
+        number of subdivisions into which tile_width and tile_height
+        should be divided
+
+    Returns
+    -------
+    smoothed_coords : numpy.ndarray
+        Nx2 numpy array of smoothed subset of input coords
+    """
+    vtxs = get_bboxes(tile_width, tile_height, n)
+
+    index_arr = np.zeros(coords.shape[0], dtype="int64")
+    for ei, (ll, ur) in enumerate(vtxs):
+        vi = ei + 1  # 0 is prohibited
+        index_arr[np.all((ll <= coords) & (ur >= coords), axis=1)] = vi
+
+    bc = np.bincount(index_arr)
+    mincount = bc[1:].min()  # 0 is prohibited
+
+    idxs = _uniq(index_arr)
+    new_coords = np.concatenate([
+        coords[np.random.choice(np.argwhere(index_arr == idx).flatten(),
+                                mincount)] for idx in idxs])
+
+    return new_coords
+
+
+def smooth_density(coords, tile_width, tile_height, n,
+                   legacy_smooth_density=False, **kwargs):
+    """homogenize distribution of points within a rectangular area by reducing
+        the number of points within n**2 equally-sized bounding boxes to
+        the minimum number of points in one of those boxes.
+
+
+    Parameters
+    ----------
+    coords : numpy.ndarray
+        Nx2 numpy array of coordinates to consider
+    tile_width : int
+        width of rectangular area containing coords
+    tile_height : int
+        height of rectangular area containing coords
+    n : int
+        number of subdivisions into which tile_width and tile_height
+        should be divided
+    legacy_smooth_density : boolean
+        whether to use (slower) legacy code.  Not recommended.
+
+    Returns
+    -------
+    smoothed_coords : numpy.ndarray
+        Nx2 numpy array of smoothed subset of input coords
+    """
+    if legacy_smooth_density:
+        return smooth_density_legacy(coords, tile_width, tile_height, n)
+    else:
+        return smooth_density_bbox(coords, tile_width, tile_height, n)
 
 
 def approx_snap_contour(contour, width, height, epsilon=20, snap_dist=5):
@@ -143,7 +285,29 @@ def calculate_mesh(a, bbox, target, get_t=False):
     return target - len(t['vertices'])
 
 
-def force_vertices_with_npoints(area_par, bbox, coords, npts):
+def force_vertices_with_npoints(area_par, bbox, coords, npts, **kwargs):
+    """create a triangular mesh which iteratively attempts to conform to a
+        minimum number of points per vertex by adjusting the maximum
+        triangle area
+
+    Parameters
+    ----------
+    area_par : float
+        initial maximum triangle area constraint for triangle.triangulate
+    bbox : dict
+        PSLG bounding box dictionary from :func:create_PSLG
+    coords : numpy.ndarray
+        Nx2 points
+    npts : int
+        minimum number of points near each vertex
+
+    Returns
+    -------
+    t : scipy.spatial.qhull.Delaunay
+        triangle mesh with minimum point count near vertices
+    area_par : float
+        area parameter used to calculate result t
+    """
     fac = 1.02
     count = 0
     max_iter = 20
@@ -153,7 +317,7 @@ def force_vertices_with_npoints(area_par, bbox, coords, npts):
                 bbox,
                 None,
                 get_t=True)
-        pt_count = count_points_near_vertices(t, coords)
+        pt_count = count_points_near_vertices(t, coords, **kwargs)
         if pt_count.min() >= npts:
             break
         area_par *= fac
@@ -193,7 +357,23 @@ def find_delaunay_with_max_vertices(bbox, nvertex):
     return mesh, a
 
 
-def compute_barycentrics(coords, mesh):
+def compute_barycentrics_legacy(coords, mesh):
+    """legacy function to compute barycentric coordinates on mesh
+
+    Parameters
+    ----------
+    coords : numpy.ndarray
+        Nx2 array of points
+    mesh : scipy.spatial.qhull.Delaunay
+        triangular mesh
+
+    Returns
+    -------
+    bcoords : numpy.ndarray
+        Nx2 array of barycentric coordinates
+    triangle_indices : numpy.ndarray
+        simplex indices of barycentric coordinates
+    """
     # https://en.wikipedia.org/wiki/Barycentric_coordinate_system#Conversion_between_barycentric_and_Cartesian_coordinates
     triangle_indices = mesh.find_simplex(coords)
     vt = np.vstack((
@@ -210,17 +390,93 @@ def compute_barycentrics(coords, mesh):
     return np.transpose(bary), triangle_indices
 
 
-def count_points_near_vertices(t, coords):
+def compute_barycentrics_native(coords, mesh):
+    """convert coordinates to barycentric coordinates on mesh
+
+    Parameters
+    ----------
+    coords : numpy.ndarray
+        Nx2 array of points
+    mesh : scipy.spatial.qhull.Delaunay
+        triangular mesh
+
+    Returns
+    -------
+    bcoords : numpy.ndarray
+        Nx2 array of barycentric coordinates
+    triangle_indices : numpy.ndarray
+        simplex indices of barycentric coordinates
+    """
+    triangle_indices = mesh.find_simplex(coords)
+    X = mesh.transform[triangle_indices, :2]
+    Y = coords - mesh.transform[triangle_indices, 2]
+    b = np.einsum('ijk,ik->ij', X, Y)
+    bcoords = np.c_[b, 1 - b.sum(axis=1)]
+    return bcoords, triangle_indices
+
+
+def compute_barycentrics(coords, mesh, legacy_barycentrics=False, **kwargs):
+    """convert coordinates to barycentric coordinates on mesh
+
+    Parameters
+    ----------
+    coords : numpy.ndarray
+        Nx2 array of points
+    mesh : scipy.spatial.qhull.Delaunay
+        triangular mesh
+    legacy_barycentrics : boolean
+        whether to use (slower) legacy method to find barycentrics.
+
+    Returns
+    -------
+    bcoords : numpy.ndarray
+        Nx2 array of barycentric coordinates
+    triangle_indices : numpy.ndarray
+        simplex indices of barycentric coordinates
+    """
+    if legacy_barycentrics:
+        return compute_barycentrics_legacy(coords, mesh)
+    else:
+        return compute_barycentrics_native(coords, mesh)
+
+
+def count_points_near_vertices(
+        t, coords, bruteforce_simplex_counts=False,
+        count_bincount=True, **kwargs):
+    """enumerate coordinates closest to the vertices in a mesh
+
+    Parameters
+    ----------
+    t : scipy.spatial.qhull.Delaunay
+        triangular mesh
+    coords : numpy.ndarray
+        Nx2 array of points to assign to vertices on t
+    bruteforce_simplex_counts : boolean
+        whether to do a bruteforce simplex finding
+    count_bincount : boolean
+       use numpy.bincount based counting rather than legacy counting
+
+    Returns
+    -------
+    pt_count : numpy.ndarray
+        array with counts of points corresponding to indices of vertices in t
+    """
     flat_tri = t.simplices.flatten()
     flat_ind = np.repeat(np.arange(t.nsimplex), 3)
     v_touches = []
     for i in range(t.npoints):
         v_touches.append(flat_ind[np.argwhere(flat_tri == i)])
-    pt_count = np.zeros(t.npoints)
-    found = t.find_simplex(coords, bruteforce=True)
-    for i in range(t.npoints):
-        for j in v_touches[i]:
-            pt_count[i] += np.count_nonzero(found == j)
+    found = t.find_simplex(coords, bruteforce=bruteforce_simplex_counts)
+    if count_bincount:
+        bc = np.bincount(found)
+        pt_count = np.array([
+            bc[v_touches[i]].sum() for i in range(t.npoints)
+        ])
+    else:
+        pt_count = np.zeros(t.npoints)
+        for i in range(t.npoints):
+            for j in v_touches[i]:
+                pt_count[i] += np.count_nonzero(found == j)
     return pt_count
 
 
@@ -235,9 +491,9 @@ def create_regularization(ncols, ntiles, defaultL, transL, lensL):
 
 
 def create_thinplatespline_tf(
-        args, mesh, solution,
+        mesh, solution,
         lens_dof_start,
-        logger,
+        logger=default_logger,
         compute_affine=False):
 
     dst = np.zeros_like(mesh.points)
@@ -272,10 +528,48 @@ def new_specs_with_tf(ref_transform, tilespecs, transforms):
     return newspecs
 
 
-def solve(A, weights, reg, x0, b):
-    ATW = A.transpose().dot(weights)
-    K = ATW.dot(A) + reg
-    K_factorized = factorized(K)
+def solve(A, weights, reg, x0, b, precomputed_ATW=None, precomputed_ATWA=None,
+          precomputed_K_factorized=None):
+    """regularized weighted solve
+
+    Parameters
+    ----------
+    A : :class:`scipy.sparse.csr`
+        the matrix, N (equations) x M (degrees of freedom)
+    weights : :class:`scipy.sparse.csr_matrix`
+        N x N diagonal matrix containing weights
+    reg : :class:`scipy.sparse.csr_matrix`
+        M x M diagonal matrix containing regularizations
+    x0 : :class:`numpy.ndarray`
+        M x nsolve float constraint values for the DOFs
+    b : :class:`numpy.ndarray`:
+        N x nsolve float right-hand-side(s)
+    precomputed_ATW : :class:`scipy.sparse.csc_matrix`
+        value to use rather than computing A.T.dot(weights)
+    precomputed_ATWA : :class:`scipy.sparse.csc_matrix`
+        value to use rather than computing A.T.dot(weights).dot(A)
+    precomputed_K_factorized : func
+        factorized solve function to use rather than computing
+        scipy.sparse.linalg.factorized(A.T.dot(weights).dot(A) + reg)
+
+    Returns
+    -------
+    solution : list of numpy.ndarray
+        list of numpy arrays of x and y vertex positions of solution
+    errx : numpy.ndarray
+        numpy array of x residuals
+    erry : numpy.ndarray
+        numpy array of y residuals
+
+    """
+    ATW = (A.transpose().dot(weights)
+           if precomputed_ATW is None else precomputed_ATW)
+    if precomputed_K_factorized is None:
+        K = (ATW.dot(A) if precomputed_ATWA is None
+             else precomputed_ATWA) + reg
+        K_factorized = factorized(K)
+    else:
+        K_factorized = precomputed_K_factorized
     solution = []
 
     i = 0
@@ -333,7 +627,7 @@ def create_x0(nrows, tilespecs):
     return x0
 
 
-def create_A(matches, tilespecs, mesh):
+def create_A(matches, tilespecs, mesh, **kwargs):
     # let's assume translation halfsize
     dof_per_tile = 1
     dof_per_vertex = 1
@@ -356,6 +650,7 @@ def create_A(matches, tilespecs, mesh):
     # nothing fancy here, row-by-row
     offset = 0
     rows = 0
+
     for mi in range(len(matches)):
         m = matches[mi]
         pindex = np.argwhere(unique_ids == m['pId'])
@@ -376,8 +671,8 @@ def create_A(matches, tilespecs, mesh):
 
         b[rows: (rows + pcoords.shape[0])] = qcoords - pcoords
         rows += pcoords.shape[0]
-        pbary = compute_barycentrics(pcoords, mesh)
-        qbary = compute_barycentrics(qcoords, mesh)
+        pbary = compute_barycentrics(pcoords, mesh, **kwargs)
+        qbary = compute_barycentrics(qcoords, mesh, **kwargs)
 
         mstep = np.arange(npoint_pairs) * nnz_per_row + offset
 
@@ -431,10 +726,208 @@ def estimate_stage_affine(t0, t1):
     return aff
 
 
+def _create_mesh(resolvedtiles, matches, nvertex,
+                 return_area_triangle_par=False, **kwargs):
+    """create mesh with a given number of vertices based on example tiles
+        and pointmatches
+
+    Parameters
+    ----------
+    resolvedtiles : renderapi.resolvedtiles.ResolvedTiles
+        resolvedtiles containing a tilespec with mask, width, and height
+        properties to use as a template for the mesh
+    matches : list of dict
+        list of point correspondences in render pointmatch format
+    nvertex : int
+        number of vertices for mesh
+    return_area_triangle_par : boolean
+        whether to return the area parameter used to generate the
+        triangular mesh
+
+    Returns
+    -------
+    mesh : scipy.spatial.qhull.Delaunay
+        triangular mesh
+    area_triangle_par : float
+        max area constraint used in generating mesh
+    """
+
+    remove_weighted_matches(matches, weight=0.0)
+
+    tilespecs = resolvedtiles.tilespecs
+    example_tspec = tilespecs[0]
+
+    tile_width = example_tspec.width
+    tile_height = example_tspec.height
+    maskUrl = example_tspec.ip[0].maskUrl
+
+    coords = condense_coords(matches)
+    nc0 = coords.shape[0]
+    coords = smooth_density(
+        coords,
+        tile_width,
+        tile_height,
+        10, **kwargs)
+
+    nc1 = coords.shape[0]
+    logger.info(
+        "\n  smoothing point density reduced points from %d to %d" %
+        (nc0, nc1))
+    if coords.shape[0] == 0:
+        raise MeshLensCorrectionException(
+            "no point matches left after smoothing density, \
+            probably some sparse areas of matching")
+
+    # create PSLG
+    bbox = create_PSLG(
+            tile_width,
+            tile_height,
+            maskUrl)
+
+    # find delaunay with max vertices
+    mesh, area_triangle_par = find_delaunay_with_max_vertices(
+        bbox, nvertex)
+
+    # and enforce neighboring matches to vertices
+    mesh, area_triangle_par = force_vertices_with_npoints(
+        area_triangle_par, bbox, coords, 3, **kwargs)
+
+    return ((mesh, area_triangle_par) if return_area_triangle_par else mesh)
+
+
+def _solve_resolvedtiles(
+        resolvedtiles, matches, nvertex, regularization_lambda,
+        regularization_translation_factor, regularization_lens_lambda,
+        good_solve_dict,
+        logger=default_logger, **kwargs):
+    """generate lens correction from resolvedtiles and pointmatches
+
+    Parameters
+    ----------
+    resolvedtiles : renderapi.resolvedtiles.ResolvedTiles
+        resolvedtiles object on which transformation will be computed
+    matches : list of dict
+         point correspondences to consider in render pointmatch format
+    nvertex :
+        number of vertices in mesh
+    regularization_lambda :  float
+        lambda value for affine regularization
+    regularization_translation_factor :  float
+        translation factor of regularization
+    regularization_lens_lambda :  float
+        lambda value for lens regularization
+    good_solve_dict :
+        dictionary to define when a solve fails
+    logger : logging.Logger
+        logger to use in reporting
+    Returns
+    -------
+    resolved : renderapi.resolvedtiles.ResolvedTiles
+        new resolvedtiles object with derived lens correction applied
+    new_ref_transform : renderapi.transform.leaf.ThinPlateSplineTransform
+        derived lens correction transform
+    jresult : dict
+        dictionary of solve information
+    """
+
+    # FIXME this is done twice -- think through
+    tilespecs = resolvedtiles.tilespecs
+    example_tspec = tilespecs[0]
+
+    mesh = _create_mesh(resolvedtiles, matches, nvertex, **kwargs)
+
+    nend = mesh.points.shape[0]
+
+    # logger = logging.getLogger(self.__class__.__name__)
+    logger.info(
+        "\n  aimed for %d mesh points, got %d" %
+        (nvertex, nend))
+
+    if mesh.points.shape[0] < 0.5*nvertex:
+        raise MeshLensCorrectionException(
+                "mesh coarser than intended")
+
+    # prepare the linear algebra and solve
+    A, weights, b, lens_dof_start = create_A(
+        matches, tilespecs, mesh)
+
+    x0 = create_x0(
+        A.shape[1], tilespecs)
+
+    reg = create_regularization(
+        A.shape[1],
+        len(tilespecs),
+        regularization_lambda,
+        regularization_translation_factor,
+        regularization_lens_lambda)
+
+    solution, errx, erry = solve(
+        A, weights, reg, x0, b)
+
+    transforms = create_transforms(
+        len(tilespecs), solution)
+
+    tf_trans, jresult, solve_message = report_solution(
+            errx, erry, transforms, good_solve_dict)
+
+    logger.info(solve_message)
+
+    # check quality of solution
+    if not all([
+            errx.mean() < good_solve_dict['error_mean'],
+            erry.mean() < good_solve_dict['error_mean'],
+            errx.std() < good_solve_dict['error_std'],
+            erry.std() < good_solve_dict['error_std']]):
+        raise MeshLensCorrectionException(
+                "Solve not good: %s" % solve_message)
+
+    logger.debug(solve_message)
+
+    new_ref_transform = create_thinplatespline_tf(
+        mesh, solution, lens_dof_start, logger)
+
+    bbox = example_tspec.bbox_transformed(tf_limit=0)
+    tbbox = new_ref_transform.tform(bbox)
+    bstr = 'new transform corners:\n'
+    for i in range(bbox.shape[0]-1):
+        bstr += "  (%0.1f, %0.1f) -> (%0.1f, %0.1f)\n" % (
+                bbox[i, 0], bbox[i, 1],
+                tbbox[i, 0], tbbox[i, 1])
+        logger.info(bstr)
+
+    new_tilespecs = new_specs_with_tf(
+        new_ref_transform, tilespecs, transforms)
+
+    stage_affine = estimate_stage_affine(tilespecs, new_tilespecs)
+    sastr = (
+        "affine estimate of tile translations:\n" +
+        "  scale: {}\n".format(stage_affine.scale) +
+        "  translation: {}\n".format(stage_affine.translation) +
+        "  shear: {}\n".format(stage_affine.shear) +
+        "  rotation: {}\n".format(np.degrees(stage_affine.rotation)))
+    logger.info(sastr)
+
+    resolved = renderapi.resolvedtiles.ResolvedTiles(
+            tilespecs=new_tilespecs,
+            transformList=[new_ref_transform])
+    return resolved, new_ref_transform, jresult
+
+
 class MeshAndSolveTransform(ArgSchemaParser):
     default_schema = MeshLensCorrectionSchema
 
-    def run(self):
+    def solve_resolvedtiles_from_args(self):
+        """use arguments to run lens correction
+
+        Returns
+        -------
+        resolved : renderapi.resolvedtiles.ResolvedTiles
+            new resolvedtiles object with derived lens correction applied
+        new_ref_transform : renderapi.transform.leaf.ThinPlateSplineTransform
+            derived lens correction transform
+        jresult : dict
+            dictionary of solve information
+        """
         if 'tilespecs' in self.args:
             jspecs = self.args['tilespecs']
         else:
@@ -448,145 +941,20 @@ class MeshAndSolveTransform(ArgSchemaParser):
         else:
             self.matches = jsongz.load(self.args['match_file'])
 
-        remove_weighted_matches(self.matches, weight=0.0)
+        return _solve_resolvedtiles(
+            renderapi.resolvedtiles.ResolvedTiles(
+                tilespecs=self.tilespecs, transformList=[]),
+            self.matches, self.args["nvertex"],
+            self.args["regularization"]["default_lambda"],
+            self.args["regularization"]["translation_factor"],
+            self.args["regularization"]["lens_lambda"],
+            self.args["good_solve"],
+            logger=self.logger
+            )
 
-        self.tile_width = self.tilespecs[0].width
-        self.tile_height = self.tilespecs[0].height
-        maskUrl = self.tilespecs[0].ip[0].maskUrl
-
-        # condense coordinates
-        self.coords = condense_coords(self.matches)
-        nc0 = self.coords.shape[0]
-        self.coords = smooth_density(
-            self.coords,
-            self.tile_width,
-            self.tile_height,
-            10)
-        nc1 = self.coords.shape[0]
-        self.logger.info(
-                "\n  smoothing point density reduced points from %d to %d" %
-                (nc0, nc1))
-        if self.coords.shape[0] == 0:
-            raise MeshLensCorrectionException(
-                    "no point matches left after smoothing density, \
-                     probably some sparse areas of matching")
-
-        # create PSLG
-        self.bbox = create_PSLG(
-                self.tile_width,
-                self.tile_height,
-                maskUrl)
-
-        # find delaunay with max vertices
-        self.mesh, self.area_triangle_par = \
-            find_delaunay_with_max_vertices(
-                self.bbox,
-                self.args['nvertex'])
-
-        # and enforce neighboring matches to vertices
-        self.mesh, self.area_triangle_par = \
-            force_vertices_with_npoints(
-                self.area_triangle_par,
-                self.bbox,
-                self.coords,
-                3)
-
-        nend = self.mesh.points.shape[0]
-
-        self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.info(
-                "\n  aimed for %d mesh points, got %d" %
-                (self.args['nvertex'], nend))
-
-        if self.mesh.points.shape[0] < 0.5*self.args['nvertex']:
-            raise MeshLensCorrectionException(
-                    "mesh coarser than intended")
-
-        # prepare the linear algebra and solve
-        self.A, self.weights, self.b, self.lens_dof_start = \
-            create_A(
-                self.matches,
-                self.tilespecs,
-                self.mesh)
-        self.x0 = create_x0(
-                self.A.shape[1],
-                self.tilespecs)
-
-        self.reg = create_regularization(
-                self.A.shape[1],
-                len(self.tilespecs),
-                self.args['regularization']['default_lambda'],
-                self.args['regularization']['translation_factor'],
-                self.args['regularization']['lens_lambda'])
-        self.solution, self.errx, self.erry = solve(
-                self.A,
-                self.weights,
-                self.reg,
-                self.x0,
-                self.b)
-
-        self.transforms = create_transforms(
-                len(self.tilespecs), self.solution)
-
-        tf_trans, jresult, self.solve_message = report_solution(
-                self.errx,
-                self.erry,
-                self.transforms,
-                self.args['good_solve'])
-
-        self.logger.info(self.solve_message)
-
-        # check quality of solution
-        if not all([
-                    self.errx.mean() <
-                    self.args['good_solve']['error_mean'],
-
-                    self.erry.mean() <
-                    self.args['good_solve']['error_mean'],
-
-                    self.errx.std() <
-                    self.args['good_solve']['error_std'],
-
-                    self.erry.std() <
-                    self.args['good_solve']['error_std']]):
-
-            raise MeshLensCorrectionException(
-                    "Solve not good: %s" % self.solve_message)
-
-        self.logger.debug(self.solve_message)
-
-        self.new_ref_transform = create_thinplatespline_tf(
-                self.args,
-                self.mesh,
-                self.solution,
-                self.lens_dof_start,
-                self.logger)
-
-        bbox = self.tilespecs[0].bbox_transformed(tf_limit=0)
-        tbbox = self.new_ref_transform.tform(bbox)
-        bstr = 'new transform corners:\n'
-        for i in range(bbox.shape[0]-1):
-            bstr += "  (%0.1f, %0.1f) -> (%0.1f, %0.1f)\n" % (
-                    bbox[i, 0], bbox[i, 1],
-                    tbbox[i, 0], tbbox[i, 1])
-        self.logger.info(bstr)
-
-        new_tilespecs = new_specs_with_tf(
-            self.new_ref_transform,
-            self.tilespecs,
-            self.transforms)
-
-        stage_affine = estimate_stage_affine(self.tilespecs, new_tilespecs)
-        sastr = "affine estimate of tile translations:\n"
-        sastr += "  scale: {}\n".format(stage_affine.scale)
-        sastr += "  translation: {}\n".format(stage_affine.translation)
-        sastr += "  shear: {}\n".format(stage_affine.shear)
-        sastr += "  rotation: {}\n".format(np.degrees(stage_affine.rotation))
-        self.logger.info(sastr)
-
-        self.resolved = renderapi.resolvedtiles.ResolvedTiles(
-                tilespecs=new_tilespecs,
-                transformList=[self.new_ref_transform])
+    def run(self):
+        self.resolved, self.new_ref_transform, jresult = (
+            self.solve_resolvedtiles_from_args())
 
         new_path = None
         if 'outfile' in self.args:
