@@ -1,6 +1,8 @@
-argschema==1.17.5
+marshmallow<3.0
+argschema<2.0
 render-python>=2.2.0
 numpy>=1.13
 scipy>=1.2.1
 triangle
 bigfeta>=1.0.3
+opencv-python
