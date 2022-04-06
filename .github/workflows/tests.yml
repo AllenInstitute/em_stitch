@@ -1,0 +1,68 @@
+name: ci
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - develop
+      - master
+  pull_request:
+    branches:
+      - develop
+      - master
+jobs:
+  test:
+    name: run tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # python versions match those in tox.ini
+        python-version: [3.7, 3.8, 3.9]
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v2
+
+      - name: Set up python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install tox-gh-actions dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install tox tox-gh-actions
+
+      - name: Test with tox
+        run: tox
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: Test Results (Python ${{ matrix.python-version }})
+          path: test-reports/test.xml
+
+      - name: Upload code coverage
+        if: matrix.python-version == '3.9'
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+
+  publish-test-results:
+    name: Publish test results
+    needs: test
+    runs-on: ubuntu-latest
+    if: success() || failure()
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          files: artifacts/**/*.xml
