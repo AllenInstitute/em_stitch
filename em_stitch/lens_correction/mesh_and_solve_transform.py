@@ -468,7 +468,7 @@ def count_points_near_vertices(
         v_touches.append(flat_ind[np.argwhere(flat_tri == i)])
     found = t.find_simplex(coords, bruteforce=bruteforce_simplex_counts)
     if count_bincount:
-        bc = np.bincount(found)
+        bc = np.bincount(found, minlength=t.nsimplex)
         pt_count = np.array([
             bc[v_touches[i]].sum() for i in range(t.npoints)
         ])
