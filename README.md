@@ -6,10 +6,10 @@
 
 Lens correction solver and stitching utilities for EM images.
 
-This repo has overlap with 
-https://github.com/AllenInstitute/render-modules
+This repo has overlap with
+https://github.com/AllenInstitute/asap-modules
 
-It is meant to be independent of render-modules and a running render server.
+It is meant to be independent of asap-modules and a running render server.
 
 # support
 
