@@ -11,6 +11,19 @@ https://github.com/AllenInstitute/asap-modules
 
 It is meant to be independent of asap-modules and a running render server.
 
+## Installation
+
+This package is pip-installable with
+```pip install em-stitch```
+
+installing from this repo can be accomplished with 
+```python setup.py install```
+
+
+## Optional dependencies
+The performance of em-stitch can benefit from the installation of `pandas` and will use it when available.  Bigfeta will use `petsc4py` to implement its solver if available, which can improve memory utilization and performance.
+
+
 # support
 
 We are not currently supporting this code, but simply releasing it to the community AS IS but are not able to provide any guarantees of support, as it is under active development. The community is welcome to submit issues, but you should not expect an active response.
