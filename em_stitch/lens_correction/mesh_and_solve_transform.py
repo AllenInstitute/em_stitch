@@ -25,24 +25,30 @@ except ImportError:
     import numpy
     _uniq = numpy.unique
 
-# this is a modification of https://github.com/
-# AllenInstitute/render-modules/blob/master/
-# rendermodules/mesh_lens_correction/MeshAndSolveTransform.py
-# that does not depend on render-modules nor
-# on a running render server
 
 logger = logging.getLogger()
 default_logger = logger
 
 
 class MeshLensCorrectionException(Exception):
-    """Exception raised when there is a \
-            problem creating a mesh lens correction"""
-    pass
+    """Exception raised when there is a
+    problem creating a mesh lens correction
+    """
 
 
 def condense_coords(matches):
-    # condense point match structure into Nx2
+    """restructure point match dictionary structure to Nx2 array
+
+    Parameters
+    ----------
+    matches : list of dict
+        list of match dictionaries in Render format
+
+    Returns
+    -------
+    coords : numpy.ndarray
+        Nx2 array representing matches
+    """
     x = []
     y = []
     for m in matches:
@@ -227,6 +233,25 @@ def smooth_density(coords, tile_width, tile_height, n,
 
 
 def approx_snap_contour(contour, width, height, epsilon=20, snap_dist=5):
+    """Approximate a contour within a number of pixels, so it isn't too
+    fine in the corner and snap to edges
+
+    Parameters
+    ----------
+    contour : numpy.ndarray
+        Nx2 array input to cv2.approxPolyDP
+    width : int
+        width to which approximated values are snapped
+    height : int
+        height to which approximated values are snapped
+    epsilon : int
+        maximum pixel distance between the original curve and its approximation
+
+    Returns
+    -------
+    approx : numpy.ndarray
+        Polygon approximating the contour
+    """
     # approximate contour within epsilon pixels,
     # so it isn't too fine in the corner
     # and snap to edges
@@ -242,6 +267,22 @@ def approx_snap_contour(contour, width, height, epsilon=20, snap_dist=5):
 
 
 def create_PSLG(tile_width, tile_height, maskUrl):
+    """create a PSLG (Planar Straight Line Graph) based on a masked image
+
+    Parameters
+    ----------
+    tile_width : int
+        width of tile for which PSLG will be created
+    tile_height : int
+        height of tile for which PSLG will be created
+    maskUrl : str or None
+        file uri to binary mask image
+
+    Returns
+    -------
+    bbox : dict
+        dictionary with keys vertices and segments representing the PSLG
+    """
     # define a PSLG for triangle
     # http://dzhelil.info/triangle/definitions.html
     # https://www.cs.cmu.edu/~quake/triangle.defs.html#pslg
@@ -276,6 +317,30 @@ def create_PSLG(tile_width, tile_height, maskUrl):
 
 
 def calculate_mesh(a, bbox, target, get_t=False):
+    # FIXME target/get_t is ugly
+    """triangulate a mesh based on a Planar Straight Line Graph with
+    mesh constraints.  Return either the Delaunay triangulation or a
+    difference in number of triangles from a target.
+
+    Parameters
+    ----------
+    a : float
+        global maximum triangular area constraint
+    bbox : dict
+        dictionary with keys vertices and segments representing PSLG
+    target : int
+        number of triangles to which the triangulation will be compared if
+        get_t is False
+    get_t : boolean
+        whether to return a Delaunay Triangulation rather than a
+        comparison to target
+
+    Returns
+    -------
+    val : scipy.spatial.Delaunay or int
+        Delaunay triangulation if get_t is True, otherwise the number of
+        vertices in the triangulation subtracted from the target
+    """
     t = triangle.triangulate(bbox, 'pqa%0.1f' % a)
     if get_t:
         # scipy.Delaunay has nice find_simplex method,
@@ -332,6 +397,23 @@ def force_vertices_with_npoints(area_par, bbox, coords, npts, **kwargs):
 
 
 def find_delaunay_with_max_vertices(bbox, nvertex):
+    """optimize a delaunay triangulation of a PSLG to create an
+    expected number of vertices
+
+    Parameters
+    ----------
+    bbox : dict
+        dictionary with keys vertices and segments representing a PSLG
+    nvertex : int
+        number of vertices for the triangulation to target
+
+    Returns
+    -------
+    mesh : scipy.spatial.Delaunay
+        resultant triangulation
+    a : float
+        area constraint used in the optimized triangulation
+    """
     # find bracketing values
     a1 = a2 = 1e6
     t1 = calculate_mesh(a1, bbox, nvertex)
@@ -481,6 +563,29 @@ def count_points_near_vertices(
 
 
 def create_regularization(ncols, ntiles, defaultL, transL, lensL):
+    """create sparse regularization matrix with distinct
+    translation and lens regularization factors
+
+    Parameters
+    ----------
+    ncols : int
+        columns to generate (based on solver matrix)
+    ntiles : int
+        number of tiles to regularize
+    defaultL : float
+        default regularization parameter lambda
+    transL : float
+        translation-only regularization factor applied to default
+        regularization parameter
+    lensL : float
+        nonlinear-only regularization factor applied to default
+        regularization parameter
+
+    Returns
+    -------
+    rmat : :class:`scipy.sparse.csr`
+        sparse regularization matrix
+    """
     # regularizations: [affine matrix, translation, lens]
     reg = np.ones(ncols).astype('float64') * defaultL
     reg[0: (ntiles * 3)] *= transL
@@ -495,6 +600,29 @@ def create_thinplatespline_tf(
         lens_dof_start,
         logger=default_logger,
         compute_affine=False):
+    """create 2D Thin Plate Spline transform required to transform mesh to
+    the solution derived from
+    em_stitch.lens_correction.mesh_and_solve_transform.solve
+
+    Parameters
+    ----------
+    mesh : scipy.spatial.qhull.Delaunay
+        triangular source mesh object
+    solution : list of numpy.ndarray
+        list of numpy arrays of x and y vertex positions of the solution
+    lens_dof_start : int
+        start index describing degrees of freedom used in create_A
+    logger : logging.Logger, optional
+        logger used in this method
+    compute_affine : bool
+        Whether to compute an affine in Thin Plate Spline estimation.
+        See renderapi.transform.ThinPlateSplineTransform
+
+    Returns
+    -------
+    transform : renderapi.transform.ThinPlateSplineTransform
+        transformation object deforming the mesh to the solution
+    """
 
     dst = np.zeros_like(mesh.points)
     dst[:, 0] = mesh.points[:, 0] + solution[0][lens_dof_start:]
@@ -518,6 +646,28 @@ def create_thinplatespline_tf(
 
 
 def new_specs_with_tf(ref_transform, tilespecs, transforms):
+    """create a copy of each tilespec in tilespecs with the first transform
+    being a reference to ref_transform and the second based on transforms
+    provided in transforms.
+    This likely expects a single transformation in the input tilespecs.
+
+    Parameters
+    ----------
+    ref_transform : renderapi.transform.Transform
+        transform to attach as a reference transform at index 0 for
+        each tilespec
+    tilespecs : list of renderapi.tilespec.TileSpec
+        tilespecs to which ref_transform and the corresponding tranform
+        from transforms should be applied
+    transforms : list of renderapi.transform.Transform
+        list of transforms of same length as tilespecs to apply as transform\
+        at index 1 of each tilespec
+
+    Returns
+    -------
+    newspecs : list of renderapi.tilespec.TileSpec
+        copied tilespecs with transformations applied
+    """
     newspecs = []
     for i in range(len(tilespecs)):
         newspecs.append(copy.deepcopy(tilespecs[i]))
@@ -585,6 +735,29 @@ def solve(A, weights, reg, x0, b, precomputed_ATW=None, precomputed_ATWA=None,
 
 
 def report_solution(errx, erry, transforms, criteria):
+    """compile results, statistics, and messages for reporting information
+    about lens correction solves
+
+    Parameters
+    ----------
+    errx : numpy.ndarray
+        numpy array of x residuals
+    erry : numpy.ndarray
+        numpy array of y residuals
+    transforms : list of renderapi.transform.Transform
+        list of transforms considered for the translation parameter
+    criteria : dict
+        criteria for good solve (deprecated)
+
+    Returns
+    -------
+    translation : numpy.ndarray
+        numpy array describing the resultant translations of the solution
+    jresult : dict
+        solution statistics dictionary
+    message : str
+        string reporting results
+    """
     translation = np.array([tf.translation for tf in transforms])
 
     jresult = {}
@@ -615,6 +788,20 @@ def report_solution(errx, erry, transforms, criteria):
 
 
 def create_x0(nrows, tilespecs):
+    """create initialization array x0
+
+    Parameters
+    ----------
+    nrows : int
+        number of rows in array (defined to match A[1])
+    tilespecs : list of renderapi.tilespecs.TileSpec
+        tilespecs from which initialization is built
+
+    Returns
+    -------
+    x0 : numpy.ndarray
+        initialization array x0
+    """
     ntiles = len(tilespecs)
     x0 = []
     x0.append(np.zeros(nrows).astype('float64'))
@@ -628,6 +815,29 @@ def create_x0(nrows, tilespecs):
 
 
 def create_A(matches, tilespecs, mesh, **kwargs):
+    """create A matrix describing translation and lens correction
+
+    Parameters
+    ----------
+    matches : list of dict
+        list of match dictionaries in render format
+    tilespecs : list of renderapi.tilespecs.TileSpec
+        tilespecs to include in solve
+    mesh : scipy.spatial.qhull.Delaunay
+        mesh of input points as produced by
+        em_stitch.lens_Correction.mesh_and_solve_transform._create_mesh
+
+    Returns
+    -------
+    A : :class:`scipy.sparse.csr`
+         matrix, N (equations) x M (degrees of freedom)
+    wts : :class:`scipy.sparse.csr_matrix`
+        N x N diagonal matrix containing weights
+    b : :class:`numpy.ndarray`:
+        N x nsolve float right-hand-side(s)
+    lens_dof_start : int
+        start index defined by degrees of freedom used to generate A
+    """
     # let's assume translation halfsize
     dof_per_tile = 1
     dof_per_vertex = 1
@@ -710,6 +920,20 @@ def create_A(matches, tilespecs, mesh, **kwargs):
 
 
 def create_transforms(ntiles, solution):
+    """create translation transformations from a solution array
+
+    Parameters
+    ----------
+    ntiles : int
+        number of tiles represented in the solution
+    solution : list of numpy.ndarray
+        list of numpy arrays of x and y positions result of solve
+
+    Returns
+    -------
+    rtransforms : list of renderapi.transform.AffineModel
+        transforms described by solution
+    """
     rtransforms = []
     for i in range(ntiles):
         rtransforms.append(renderapi.transform.AffineModel(
@@ -719,6 +943,21 @@ def create_transforms(ntiles, solution):
 
 
 def estimate_stage_affine(t0, t1):
+    """estimate affine transformation between translation components
+    of tiles in t0 and tiles in t1 to give overall stage affine transformation.
+
+    Parameters
+    ----------
+    t0 : list of renderapi.tilespec.TileSpec
+        source tilespecs (initial position)
+    t1 : list of renderapi.tilespec.TileSpec
+        destination tilespecs (post-solve)
+    
+    Returns
+    -------
+    aff : renderapi.transform.AffineModel
+        2D affine transform representing stage transformation
+    """
     src = np.array([t.tforms[0].translation for t in t0])
     dst = np.array([t.tforms[1].translation for t in t1])
     aff = renderapi.transform.AffineModel()
