@@ -6,10 +6,23 @@
 
 Lens correction solver and stitching utilities for EM images.
 
-This repo has overlap with 
-https://github.com/AllenInstitute/render-modules
+This repo has overlap with
+https://github.com/AllenInstitute/asap-modules
 
-It is meant to be independent of render-modules and a running render server.
+It is meant to be independent of asap-modules and a running render server.
+
+## Installation
+
+This package is pip-installable with
+```pip install em-stitch```
+
+installing from this repo can be accomplished with 
+```python setup.py install```
+
+
+## Optional dependencies
+The performance of em-stitch can benefit from the installation of `pandas` and will use it when available.  Bigfeta will use `petsc4py` to implement its solver if available, which can improve memory utilization and performance.
+
 
 # support
 
