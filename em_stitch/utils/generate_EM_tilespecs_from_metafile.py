@@ -69,7 +69,7 @@ class GenerateEMTileSpecsModule(ArgSchemaParser):
         tileId = self.tileId_from_basename(imgdata['img_path'])
         sectionId = (self.sectionId_from_z(z) if sectionId is None
                      else sectionId)
-        return self.ts_from_tileId_imgdata(
+        return self.ts_from_imgdata_tileId(
             imgdata, imgdir, x, y, tileId, 
             minint, maxint, maskUrl,
             width, height, z, sectionId,
