@@ -35,6 +35,10 @@ class GenerateEMTileSpecsModule(ArgSchemaParser):
         return os.path.splitext(os.path.basename(fname))[0]
 
     @staticmethod
+    def sectionId_from_z(z):
+        return str(float(z))
+
+    @staticmethod
     def ts_from_imgdata_tileId(imgdata, imgdir, x, y, tileId, 
                                minint=0, maxint=255, maskUrl=None,
                                width=3840, height=3840, z=None, sectionId=None,
