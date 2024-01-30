@@ -75,6 +75,7 @@ def filter_match_collection(
         n_clusters=None, n_cluster_pts=20, ransacReprojThreshold=40.,
         ignore_match_indices=(),
         input_n_key="n_from_gpu", output_n_key="n_after_filter"):
+    ignore_match_indices = (set() if ignore_match_indices is None else ignore_match_indices)
     ignore_match_indices = set(ignore_match_indices)
 
     counts = []
@@ -120,7 +121,10 @@ def make_collection_json(
 
     input_matches = template_match_md["collection"]
 
-    m, counts = filter_match_collection(input_matches, thresh, )
+    m, counts = filter_match_collection(
+        input_matches, thresh, 
+        ignore_match_indices=ignore_match_indices
+        )
 
     # counts = []
     # for m in template_match_md['collection']:
