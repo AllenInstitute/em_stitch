@@ -73,7 +73,7 @@ def dummy_match(npts=100, tform_type='affine'):
                 np.random.rand() * oh + overlap.bounds[1])
         if overlap.contains(pt):
             pts.append(pt)
-    src = np.array([np.array(p) for p in pts])
+    src = np.array([np.array(p.coords[0]) for p in pts])
     match = {}
     for k in ['pId', 'qId', 'pGroupId', 'qGroupId']:
         match[k] = k

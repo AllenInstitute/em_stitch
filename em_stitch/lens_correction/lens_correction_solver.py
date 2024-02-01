@@ -70,39 +70,85 @@ def tilespec_input_from_metafile(
     return result
 
 
+def filter_match_collection(
+        matches, threshold, model="Similarity",
+        n_clusters=None, n_cluster_pts=20, ransacReprojThreshold=40.,
+        ignore_match_indices=(),
+        input_n_key="n_from_gpu", output_n_key="n_after_filter"):
+    ignore_match_indices = (set() if ignore_match_indices is None else ignore_match_indices)
+    ignore_match_indices = set(ignore_match_indices)
+
+    counts = []
+    new_matches = []
+
+    for i, m in enumerate(matches):
+        input_n = len(m["matches"]["p"][0])
+
+        _, _, w, _ = common_utils.pointmatch_filter(
+            m,
+            n_clusters=n_clusters,
+            n_cluster_pts=n_cluster_pts,
+
+            )
+
+        m["matches"]["w"] = w.tolist()
+
+        output_n = np.count_nonzero(w)
+
+        counts.append({
+            input_n_key: input_n,
+            output_n_key: output_n})
+
+        # original version ran pointmatch filtering for these and then filtered
+        #   them out of the matches.  Do this by continuing here, I guess.
+        if i in ignore_match_indices:
+            continue
+
+        new_matches.append(m)
+
+    return new_matches, counts
+
+
 def make_collection_json(
         template_file,
         output_dir,
-        thresh,
+        thresh,  # FIXME thresh not used in this version
         compress,
         ignore_match_indices=None):
 
     with open(template_file, 'r') as f:
-        matches = json.load(f)
+        template_match_md = json.load(f)
 
-    counts = []
-    for m in matches['collection']:
-        counts.append({})
-        ind = np.arange(len(m['matches']['p'][0]))
-        counts[-1]['n_from_gpu'] = ind.size
+    input_matches = template_match_md["collection"]
 
-        _, _, w, _ = common_utils.pointmatch_filter(
-                m,
-                n_clusters=None,
-                n_cluster_pts=20,
-                ransacReprojThreshold=40.0,
-                model='Similarity')
+    m, counts = filter_match_collection(
+        input_matches, thresh, 
+        ignore_match_indices=ignore_match_indices
+        )
 
-        m['matches']['w'] = w.tolist()
+    # counts = []
+    # for m in template_match_md['collection']:
+    #     counts.append({})
+    #     ind = np.arange(len(m['matches']['p'][0]))
+    #     counts[-1]['n_from_gpu'] = ind.size
 
-        counts[-1]['n_after_filter'] = np.count_nonzero(w)
+    #     _, _, w, _ = common_utils.pointmatch_filter(
+    #             m,
+    #             n_clusters=None,
+    #             n_cluster_pts=20,
+    #             ransacReprojThreshold=40.0,
+    #             model='Similarity')
 
-    m = matches['collection']
+    #     m['matches']['w'] = w.tolist()
 
-    if ignore_match_indices:
-        m = [match for i, match in enumerate(matches['collection'])
-             if i not in ignore_match_indices]
-        logger.warning("you are ignoring some point matches")
+    #     counts[-1]['n_after_filter'] = np.count_nonzero(w)
+
+    # m = matches['collection']
+
+    # if ignore_match_indices:
+    #     m = [match for i, match in enumerate(matches['collection'])
+    #          if i not in ignore_match_indices]
+    #     logger.warning("you are ignoring some point matches")
 
     collection_file = os.path.join(output_dir, "collection.json")
     collection_file = jsongz.dump(m, collection_file, compress=compress)
