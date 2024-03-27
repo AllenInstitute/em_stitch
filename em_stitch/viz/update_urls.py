@@ -1,12 +1,15 @@
-import os
-import shutil
-from six.moves import urllib
-import pathlib
-from bigfeta import jsongz
-from argschema import ArgSchemaParser
-from .schemas import UpdateUrlSchema
-import renderapi
 import logging
+import os
+import pathlib
+import shutil
+
+from six.moves import urllib
+
+from argschema import ArgSchemaParser
+from bigfeta import jsongz
+import renderapi
+
+from .schemas import UpdateUrlSchema
 
 logger = logging.getLogger(__name__)
 

@@ -1,11 +1,13 @@
-import numpy as np
-import cv2
-import renderapi
 import time
-from scipy import ndimage
 import logging
-from ..utils import utils as common_utils
 
+import cv2
+import numpy as np
+from scipy import ndimage
+
+import renderapi
+
+from ..utils import utils as common_utils
 
 logger = logging.getLogger(__name__)
 

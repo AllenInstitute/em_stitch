@@ -1,15 +1,17 @@
-from argschema import ArgSchemaParser
-import renderapi
-from em_stitch.montage import meta_to_collection
-from em_stitch.montage.schemas import MontageSolverSchema
-from em_stitch.utils.generate_EM_tilespecs_from_metafile import \
-        GenerateEMTileSpecsModule
-from em_stitch.utils.utils import pointmatch_filter, get_z_from_metafile
-from bigfeta import jsongz
-import bigfeta.bigfeta as bfa
+import glob
 import json
 import os
-import glob
+
+from argschema import ArgSchemaParser
+from bigfeta import jsongz
+import bigfeta.bigfeta as bfa
+import renderapi
+
+from em_stitch.montage import meta_to_collection
+from em_stitch.montage.schemas import MontageSolverSchema
+from em_stitch.utils.generate_EM_tilespecs_from_metafile import (
+    GenerateEMTileSpecsModule)
+from em_stitch.utils.utils import pointmatch_filter, get_z_from_metafile
 
 dname = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),

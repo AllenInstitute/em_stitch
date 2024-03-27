@@ -1,13 +1,16 @@
+import json
+import os
+
 from matplotlib.backends.backend_pdf import PdfPages
-from argschema import ArgSchemaParser
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-import renderapi
 import numpy as np
-import json
+
+from argschema import ArgSchemaParser
 from bigfeta import jsongz
+import renderapi
+
 from em_stitch.plots.schemas import MontagePlotsSchema
-import os
 
 example = {
         "collection_path": "/data/em-131fs3/lctest/T4.2019.04.29b/001738/0/collection.json.gz",

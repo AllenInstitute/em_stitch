@@ -1,17 +1,21 @@
-import renderapi
-from matplotlib.backends.backend_pdf import PdfPages
-import matplotlib.pyplot as plt
-import json
-import numpy as np
+import datetime
 import glob
+import json
 import os
 import re
 import warnings
-import datetime
-from em_stitch.utils.utils import src_from_xy
-from em_stitch.plots.schemas import LensQuiverSchema
+
+from matplotlib.backends.backend_pdf import PdfPages
+import matplotlib.pyplot as plt
+import numpy as np
+
 from argschema import ArgSchemaParser
 from bigfeta import jsongz
+import renderapi
+
+from em_stitch.utils.utils import src_from_xy
+from em_stitch.plots.schemas import LensQuiverSchema
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 example = {

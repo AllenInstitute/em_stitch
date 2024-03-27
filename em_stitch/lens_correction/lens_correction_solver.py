@@ -1,19 +1,23 @@
+import glob
+import json
+import logging
+import os
+import warnings
+
+import cv2
+import numpy as np
+
 from argschema import ArgSchemaParser
+from bigfeta import jsongz
+import renderapi
+
 from .schemas import LensCorrectionSchema
-from ..utils.generate_EM_tilespecs_from_metafile import \
-        GenerateEMTileSpecsModule
+from ..utils.generate_EM_tilespecs_from_metafile import (
+    GenerateEMTileSpecsModule)
 from ..utils import utils as common_utils
 from .mesh_and_solve_transform import MeshAndSolveTransform
 from . import utils
-from bigfeta import jsongz
-import logging
-import os
-import glob
-import json
-import numpy as np
-import renderapi
-import cv2
-import warnings
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 logger = logging.getLogger(__name__)
