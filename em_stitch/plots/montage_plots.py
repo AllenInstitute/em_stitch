@@ -16,6 +16,25 @@ example = {
 
 
 def tspec_transform(tspec, mpq, shared=None):
+    """
+    Transform points using the transformations associated with a tilespec.
+      Assumes any reference transforms are included in initial points and skips
+      calculation for those.
+
+    Parameters
+    ----------
+    tspec : renderapi.tilespec.TileSpec
+        Tilespec object containing transformations.
+    mpq : List[Tuple[float, float]]
+        List of (x, y) points to transform.
+    shared : Optional[Any], optional
+        Shared information, by default None.
+
+    Returns
+    -------
+    np.ndarray
+        Transformed points.
+    """
     xy = np.array(mpq).transpose()
     for tf in tspec.tforms:
         if isinstance(tf, renderapi.transform.ReferenceTransform):
@@ -27,6 +46,21 @@ def tspec_transform(tspec, mpq, shared=None):
 
 
 def make_xyres(matches, resolved):
+    """
+    Create XY coordinates and residuals from matches and resolved tiles.
+
+    Parameters
+    ----------
+    matches : List[Dict[str, Any]]
+        List of matches.
+    resolved : renderapi.resolvedtiles.ResolvedTiles
+        Resolved tiles object.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
+        Tuple containing XY coordinates and residuals for valid and invalid matches.
+    """
     tids = np.array([t.tileId for t in resolved.tilespecs])
     xy = []
     res = []

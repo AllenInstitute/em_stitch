@@ -11,6 +11,23 @@ logger = logging.getLogger(__name__)
 
 
 def split_inverse_tform(tform, src, block_size):
+    """
+    Split and inverse transform the source array using the provided transformation.
+
+    Parameters
+    ----------
+    tform : Any
+        Transformation object.
+    src : np.ndarray
+        Source array.
+    block_size : int
+        Size of each block.
+
+    Returns
+    -------
+    np.ndarray
+        Inverse transformed array.
+    """
     nsplit = np.ceil(float(src.shape[0]) / float(block_size))
     split_src = np.array_split(src, nsplit, axis=0)
     dst = []
@@ -21,6 +38,28 @@ def split_inverse_tform(tform, src, block_size):
 
 
 def maps_from_tform(tform, width, height, block_size=10000, res=32):
+    """
+    Generate maps and a mask for remapping based on the provided transformation.
+
+    Parameters
+    ----------
+    tform : Any
+        Transformation object.
+    width : int
+        Width of the map.
+    height : int
+        Height of the map.
+    block_size : int, optional
+        Size of each block, by default 10000.
+    res : int, optional
+        cell resolution, by default 32.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray, np.ndarray]
+        Tuple containing map1, map2, and mask arrays.
+
+    """
     t0 = time.time()
 
     x = np.arange(0, width + res, res)
@@ -53,6 +92,22 @@ def maps_from_tform(tform, width, height, block_size=10000, res=32):
 
 
 def estimate_stage_affine(t0, t1):
+    """
+    Estimate affine transformation between two sets of translations.
+
+    Parameters
+    ----------
+    t0 : Iterable
+        List of transformations (t0).
+    t1 : Iterable
+        List of transformations (t1).
+
+    Returns
+    -------
+    renderapi.transform.AffineModel
+        Estimated affine transformation.
+
+    """
     src = np.array([t.tforms[0].translation for t in t0])
     dst = np.array([t.tforms[1].translation for t in t1])
     aff = renderapi.transform.AffineModel()
@@ -61,6 +116,16 @@ def estimate_stage_affine(t0, t1):
 
 
 def remove_weighted_matches(matches, weight=0.0):
+    """
+    Remove matches with specified weight.
+
+    Parameters
+    ----------
+    matches : List[Dict[str, Any]]
+        List of matches.
+    weight : float, optional
+        Weight threshold, by default 0.0.
+    """
     for m in matches:
         ind = np.invert(np.isclose(np.array(m['matches']['w']), weight))
         m['matches']['p'] = np.array(m['matches']['p'])[:, ind].tolist()
