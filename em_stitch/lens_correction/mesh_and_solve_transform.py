@@ -1,21 +1,25 @@
+import copy
+import datetime
+import logging
+import os
+
+from six.moves import urllib
+
+import cv2
 import numpy as np
-import triangle
 import scipy.optimize
-from scipy.spatial import Delaunay
 import scipy.sparse as sparse
 from scipy.sparse import csr_matrix
 from scipy.sparse.linalg import factorized
-import renderapi
-import copy
-import os
-import datetime
-import cv2
-from six.moves import urllib
+from scipy.spatial import Delaunay
+import triangle
+
 from argschema import ArgSchemaParser
+from bigfeta import jsongz
+import renderapi
+
 from .schemas import MeshLensCorrectionSchema
 from .utils import remove_weighted_matches
-from bigfeta import jsongz
-import logging
 
 try:
     # pandas unique is faster than numpy, use where appropriate

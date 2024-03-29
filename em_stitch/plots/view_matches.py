@@ -1,14 +1,17 @@
+import logging
+import os
+
+import cv2
+import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
-import os
-import numpy as np
-import logging
-from em_stitch.lens_correction.utils import maps_from_tform
+
+from argschema import ArgSchemaParser
 from bigfeta import jsongz
 import renderapi
-import cv2
+
 from em_stitch.plots.schemas import ViewMatchesSchema
-from argschema import ArgSchemaParser
+from em_stitch.lens_correction.utils import maps_from_tform
 
 logger = logging.getLogger()
 

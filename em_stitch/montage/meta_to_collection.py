@@ -5,11 +5,11 @@
 '''
 
 import argparse
+from enum import IntEnum
 import glob
 import json
 import os
 import sys
-from enum import IntEnum
 
 
 # Position codes in metafile

@@ -1,10 +1,13 @@
-import renderapi
-import os
 import json
-import numpy
+import os
 import pathlib
-from bigfeta import jsongz
+
+import numpy
+
 from argschema import ArgSchemaParser
+from bigfeta import jsongz
+import renderapi
+
 from .schemas import GenerateEMTileSpecsParameters
 
 # this is a modification of https://github.com/AllenInstitute/
@@ -30,16 +33,19 @@ class GenerateEMTileSpecsModule(ArgSchemaParser):
         return (int(x * cr + y * sr),
                 int(-x * sr + y * cr))
 
-    def tileId_from_basename(self, fname):
+    @staticmethod
+    def tileId_from_basename(fname):
         return os.path.splitext(os.path.basename(fname))[0]
 
-    def ts_from_imgdata(self, imgdata, imgdir, x, y,
-                        minint=0, maxint=255, maskUrl=None,
-                        width=3840, height=3840, z=None, sectionId=None,
-                        scopeId=None, cameraId=None, pixelsize=None):
-        tileId = self.tileId_from_basename(imgdata['img_path'])
-        sectionId = (self.sectionId_from_z(z) if sectionId is None
-                     else sectionId)
+    @staticmethod
+    def sectionId_from_z(z):
+        return str(float(z))
+
+    @staticmethod
+    def ts_from_imgdata_tileId(imgdata, imgdir, x, y, tileId, 
+                               minint=0, maxint=255, maskUrl=None,
+                               width=3840, height=3840, z=None, sectionId=None,
+                               scopeId=None, cameraId=None, pixelsize=None):
         raw_tforms = [renderapi.transform.AffineModel(B0=x, B1=y)]
         imageUrl = pathlib.Path(
             os.path.abspath(os.path.join(
@@ -62,6 +68,56 @@ class GenerateEMTileSpecsModule(ArgSchemaParser):
             stageX=imgdata['img_meta']['stage_pos'][0],
             stageY=imgdata['img_meta']['stage_pos'][1],
             rotation=imgdata['img_meta']['angle'], pixelsize=pixelsize)
+
+    def ts_from_imgdata(self, imgdata, imgdir, x, y,
+                        minint=0, maxint=255, maskUrl=None,
+                        width=3840, height=3840, z=None, sectionId=None,
+                        scopeId=None, cameraId=None, pixelsize=None):
+        tileId = self.tileId_from_basename(imgdata['img_path'])
+        sectionId = (self.sectionId_from_z(z) if sectionId is None
+                     else sectionId)
+        return self.ts_from_imgdata_tileId(
+            imgdata, imgdir, x, y, tileId, 
+            minint, maxint, maskUrl,
+            width, height, z, sectionId,
+            scopeId, cameraId, pixelsize)
+
+    @classmethod
+    def ts_from_metadata(
+            cls, md, image_directory, z, sectionId=None,
+            minimum_intensity=0, maximum_intensity=255, maskUrl=None):
+        roidata = md[0]['metadata']
+        imgdata = md[1]['data']
+        img_coords = {img['img_path']: cls.image_coords_from_stage(
+            img['img_meta']['stage_pos'],
+            img['img_meta']['pixel_size_x_move'],
+            img['img_meta']['pixel_size_y_move'],
+            numpy.radians(img['img_meta']['angle'])) for img in imgdata}
+
+        minX, minY = numpy.min(numpy.array(list(img_coords.values())), axis=0)
+        # assume isotropic pixels
+        pixelsize = roidata['calibration']['highmag']['x_nm_per_pix']
+        
+        inputs = {
+            "minint": minimum_intensity,
+            "maxint": maximum_intensity,
+            "z": z,
+            "sectionId": sectionId,
+            "maskUrl": maskUrl
+        }
+
+        tspecs = [
+                cls.ts_from_imgdata_tileId(
+                    img, image_directory,
+                    img_coords[img['img_path']][0] - minX,
+                    img_coords[img['img_path']][1] - minY,
+                    cls.tileId_from_basename(img["img_path"]),
+                    width=roidata['camera_info']['width'],
+                    height=roidata['camera_info']['height'],
+                    scopeId=roidata['temca_id'],
+                    cameraId=roidata['camera_info']['camera_id'],
+                    pixelsize=pixelsize, **inputs) for img in imgdata]
+        return tspecs
 
     def run(self):
         with open(self.args['metafile'], 'r') as f:
