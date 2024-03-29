@@ -1,9 +1,12 @@
 import warnings
+
 from marshmallow.warnings import ChangedInMarshmallow3Warning
+
 from argschema import ArgSchema
 from argschema.fields import (
-        InputDir, InputFile, Float,
-        Int, OutputFile, Str, Boolean)
+    InputDir, InputFile, Float,
+    Int, OutputFile, Str, Boolean)
+
 warnings.simplefilter(
         action='ignore',
         category=ChangedInMarshmallow3Warning)

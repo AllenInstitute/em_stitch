@@ -1,15 +1,17 @@
-from argschema import ArgSchemaParser
-import renderapi
-from em_stitch.montage import meta_to_collection
-from em_stitch.montage.schemas import MontageSolverSchema
-from em_stitch.utils.generate_EM_tilespecs_from_metafile import \
-        GenerateEMTileSpecsModule
-from em_stitch.utils.utils import pointmatch_filter, get_z_from_metafile
-from bigfeta import jsongz
-import bigfeta.bigfeta as bfa
+import glob
 import json
 import os
-import glob
+
+from argschema import ArgSchemaParser
+from bigfeta import jsongz
+import bigfeta.bigfeta as bfa
+import renderapi
+
+from em_stitch.montage import meta_to_collection
+from em_stitch.montage.schemas import MontageSolverSchema
+from em_stitch.utils.generate_EM_tilespecs_from_metafile import (
+    GenerateEMTileSpecsModule)
+from em_stitch.utils.utils import pointmatch_filter, get_z_from_metafile
 
 dname = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
@@ -33,6 +35,23 @@ class MontageSolverException(Exception):
 
 
 def do_solve(template_path, args, index):
+    """
+    Perform alignment solving based on the provided template and arguments.
+
+    Parameters
+    ----------
+    template_path : str
+        Path to the template file.
+    args : Dict[str, Any]
+        Arguments dictionary containing input and output information.
+    index : int
+        Index.
+
+    Returns
+    -------
+    Dict[str, Any]
+        Results of the alignment solving process.
+    """
     with open(template_path, 'r') as f:
         template = json.load(f)
     template['input_stack']['input_file'] = \
@@ -76,6 +95,27 @@ def do_solve(template_path, args, index):
 
 
 def do_solves(collection, input_stack, z, compress, solver_args):
+    """
+    Perform multiple alignment solving processes.
+
+    Parameters
+    ----------
+    collection : str
+        Collection file.
+    input_stack : str
+        Input stack file.
+    z : int
+        Z value.
+    compress : bool
+        Whether to compress the output.
+    solver_args : List[Dict[str, Any]]
+        List of solver arguments.
+
+    Returns
+    -------
+    List[Dict[str, Any]]
+        List of results from alignment solving processes.
+    """
     args = {'input_stack': {}, 'output_stack': {}, 'pointmatch': {}}
     args['input_stack']['input_file'] = input_stack
     args['pointmatch']['input_file'] = collection
@@ -90,6 +130,19 @@ def do_solves(collection, input_stack, z, compress, solver_args):
 
 
 def montage_filter_matches(matches, thresh, model='Similarity'):
+    """
+    Filter matches in a montage.
+
+    Parameters
+    ----------
+    matches : List[Dict[str, Any]]
+        List of matches.
+    thresh : float
+        Threshold value.
+    model : str, optional
+        Model type, by default 'Similarity'.
+
+    """
     for match in matches:
         _, _, w, _ = pointmatch_filter(
                 match,
@@ -101,10 +154,43 @@ def montage_filter_matches(matches, thresh, model='Similarity'):
 
 
 def get_metafile_path(datadir):
+    """
+    Get the path of the metadata file in the specified directory.
+
+    Parameters
+    ----------
+    datadir : str
+        Directory where the metadata file is located.
+
+    Returns
+    -------
+    str
+        Path of the metadata file.
+    """
     return glob.glob(os.path.join(datadir, '_metadata*.json'))[0]
 
 
 def make_raw_tilespecs(metafile, outputdir, groupId, compress):
+    """
+    Generate raw tilespecs from a metadata file.
+
+    Parameters
+    ----------
+    metafile : str
+        Path to the metadata file.
+    outputdir : str
+        Directory where the output will be stored.
+    groupId : str
+        Group ID.
+    compress : bool
+        Whether to compress the output.
+
+    Returns
+    -------
+    Tuple[str, int]
+        Path of the generated raw tilespecs file and the corresponding z value.
+
+    """
     z = get_z_from_metafile(metafile)
     tspecin = {
             "metafile": metafile,
@@ -119,6 +205,25 @@ def make_raw_tilespecs(metafile, outputdir, groupId, compress):
 
 
 def get_transform(metafile, tfpath, refdict, read_from):
+    """
+    Get transformation based on specified parameters.
+
+    Parameters
+    ----------
+    metafile : str
+        Path to the metadata file.
+    tfpath : str
+        Path to the transformation file.
+    refdict : Dict[str, Any]
+        Reference dictionary for transformation.
+    read_from : str
+        Source to read transformation data from ('metafile', 'reffile', or 'dict').
+
+    Returns
+    -------
+    renderapi.transform.Transform
+        Transformation object.
+    """
     if read_from == 'metafile':
         with open(metafile, 'r') as f:
             j = json.load(f)
@@ -132,6 +237,25 @@ def get_transform(metafile, tfpath, refdict, read_from):
 
 
 def make_resolved(rawspecpath, tform, outputdir, compress):
+    """
+    Generate resolved tiles from raw tilespecs and a transformation.
+
+    Parameters
+    ----------
+    rawspecpath : str
+        Path to the raw tilespecs file.
+    tform : renderapi.transform.Transform
+        Transformation object.
+    outputdir : str
+        Directory where the output will be stored.
+    compress : bool
+        Whether to compress the output.
+
+    Returns
+    -------
+    str
+        Path of the generated resolved tiles file.
+    """
     # read in the tilespecs
     rtj = jsongz.load(rawspecpath)
     tspecs = [renderapi.tilespec.TileSpec(json=t) for t in rtj]

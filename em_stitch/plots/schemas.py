@@ -1,7 +1,7 @@
 from argschema import ArgSchema
 from argschema.fields import (
-        InputDir, InputFile, Str, List, Boolean, Int,
-        OutputFile, Float)
+    InputDir, InputFile, Str, List, Boolean, Int,
+    OutputFile, Float)
 
 
 class LensQuiverSchema(ArgSchema):

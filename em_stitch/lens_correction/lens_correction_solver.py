@@ -1,19 +1,23 @@
+import glob
+import json
+import logging
+import os
+import warnings
+
+import cv2
+import numpy as np
+
 from argschema import ArgSchemaParser
+from bigfeta import jsongz
+import renderapi
+
 from .schemas import LensCorrectionSchema
-from ..utils.generate_EM_tilespecs_from_metafile import \
-        GenerateEMTileSpecsModule
+from ..utils.generate_EM_tilespecs_from_metafile import (
+    GenerateEMTileSpecsModule)
 from ..utils import utils as common_utils
 from .mesh_and_solve_transform import MeshAndSolveTransform
 from . import utils
-from bigfeta import jsongz
-import logging
-import os
-import glob
-import json
-import numpy as np
-import renderapi
-import cv2
-import warnings
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 logger = logging.getLogger(__name__)
@@ -39,6 +43,26 @@ class LensCorrectionException(Exception):
 
 
 def one_file(fdir, fstub):
+    """
+    Get a single file matching a directory and filename pattern.
+
+    Parameters
+    ----------
+    fdir : str
+        The directory where the file should be located.
+    fstub : str
+        The filename pattern to match.
+
+    Returns
+    -------
+    str
+        The full path of the single file matching the pattern.
+
+    Raises
+    ------
+    LensCorrectionException
+        If no file or more than one file is found matching the pattern.
+    """
     fullstub = os.path.join(fdir, fstub)
     files = glob.glob(fullstub)
     lf = len(files)
@@ -52,6 +76,27 @@ def one_file(fdir, fstub):
 
 def tilespec_input_from_metafile(
         metafile, mask_file, output_dir, log_level, compress):
+    """
+    get tilespec input data from a metafile.
+
+    Parameters
+    ----------
+    metafile : str
+        Path to the metafile.
+    mask_file : str
+        Path to the mask file.
+    output_dir : str
+        Directory where the output will be stored.
+    log_level : int
+        Log level for the operation.
+    compress : bool
+        Whether to compress the output.
+
+    Returns
+    -------
+    Dict[str, Union[str, int, bool]]
+        A dictionary containing the generated tilespec input data.
+    """
     result = {}
     result['metafile'] = metafile
 
@@ -75,6 +120,35 @@ def filter_match_collection(
         n_clusters=None, n_cluster_pts=20, ransacReprojThreshold=40.,
         ignore_match_indices=(),
         input_n_key="n_from_gpu", output_n_key="n_after_filter"):
+    """
+    Filter a collection of matches based on specified criteria.
+
+    Parameters
+    ----------
+    matches : List[Dict[str, Any]]
+        The collection of matches to filter.
+    threshold : float
+        Threshold value.
+    model : str, optional
+        Model type, by default "Similarity".
+    n_clusters : int, optional
+        Number of clusters, by default None.
+    n_cluster_pts : int, optional
+        Number of cluster points, by default 20.
+    ransacReprojThreshold : float, optional
+        RANSAC reprojection threshold, by default 40.0.
+    ignore_match_indices : Optional[Iterable[int]], optional
+        Indices of matches to ignore, by default None.
+    input_n_key : str, optional
+        Key to store input count in counts dictionary, by default "n_from_gpu".
+    output_n_key : str, optional
+        Key to store output count in counts dictionary, by default "n_after_filter".
+
+    Returns
+    -------
+    Tuple[List[Dict[str, Any]], List[Dict[str, int]]]
+        A tuple containing the filtered matches and their corresponding counts.
+    """
     ignore_match_indices = (set() if ignore_match_indices is None else ignore_match_indices)
     ignore_match_indices = set(ignore_match_indices)
 
@@ -115,7 +189,27 @@ def make_collection_json(
         thresh,  # FIXME thresh not used in this version
         compress,
         ignore_match_indices=None):
+    """
+    Create a JSON collection file from a template file.
 
+    Parameters
+    ----------
+    template_file : str
+        Path to the template file.
+    output_dir : str
+        Directory where the output will be stored.
+    thresh : float
+        Threshold value.
+    compress : bool
+        Whether to compress the output.
+    ignore_match_indices : Optional[List[int]], optional
+        Indices of matches to ignore, by default None.
+
+    Returns
+    -------
+    Tuple[str, List[Dict[str, int]]]
+        A tuple containing the path to the collection file and a list of counts.
+    """
     with open(template_file, 'r') as f:
         template_match_md = json.load(f)
 
@@ -124,31 +218,7 @@ def make_collection_json(
     m, counts = filter_match_collection(
         input_matches, thresh, 
         ignore_match_indices=ignore_match_indices
-        )
-
-    # counts = []
-    # for m in template_match_md['collection']:
-    #     counts.append({})
-    #     ind = np.arange(len(m['matches']['p'][0]))
-    #     counts[-1]['n_from_gpu'] = ind.size
-
-    #     _, _, w, _ = common_utils.pointmatch_filter(
-    #             m,
-    #             n_clusters=None,
-    #             n_cluster_pts=20,
-    #             ransacReprojThreshold=40.0,
-    #             model='Similarity')
-
-    #     m['matches']['w'] = w.tolist()
-
-    #     counts[-1]['n_after_filter'] = np.count_nonzero(w)
-
-    # m = matches['collection']
-
-    # if ignore_match_indices:
-    #     m = [match for i, match in enumerate(matches['collection'])
-    #          if i not in ignore_match_indices]
-    #     logger.warning("you are ignoring some point matches")
+    )
 
     collection_file = os.path.join(output_dir, "collection.json")
     collection_file = jsongz.dump(m, collection_file, compress=compress)

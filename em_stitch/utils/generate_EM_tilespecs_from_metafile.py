@@ -1,10 +1,13 @@
-import renderapi
-import os
 import json
-import numpy
+import os
 import pathlib
-from bigfeta import jsongz
+
+import numpy
+
 from argschema import ArgSchemaParser
+from bigfeta import jsongz
+import renderapi
+
 from .schemas import GenerateEMTileSpecsParameters
 
 # this is a modification of https://github.com/AllenInstitute/

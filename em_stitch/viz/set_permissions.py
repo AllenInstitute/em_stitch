@@ -1,9 +1,12 @@
-from argschema import ArgSchemaParser
-from .schemas import SetPermissionsSchema
+import logging
+import os
+
 import subprocess
 import sys
-import os
-import logging
+
+from argschema import ArgSchemaParser
+
+from .schemas import SetPermissionsSchema
 
 logger = logging.getLogger(__name__)
 
