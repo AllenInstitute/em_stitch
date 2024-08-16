@@ -104,3 +104,6 @@ ENV/
 .vscode
 
 .DS_Store
+
+# pixi environments
+.pixi
