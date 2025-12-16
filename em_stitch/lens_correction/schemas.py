@@ -62,14 +62,18 @@ class MeshLensCorrectionSchema(ArgSchema):
     tilespecs = List(
         Dict,
         required=False,
-        description="list of dict of tilespecs")
+        description="list of dict of tilespecs",
+        cli_as_single_argument=True
+    )
     match_file = InputFile(
         required=False,
         description="path to json of matches")
     matches = List(
         Dict,
         required=False,
-        description="list of dict of matches")
+        description="list of dict of matches",
+        cli_as_single_argument=True
+    )
     regularization = Nested(regularization, missing={})
     good_solve = Nested(good_solve_criteria, missing={})
     output_dir = OutputDir(
@@ -130,7 +134,9 @@ class LensCorrectionSchema(ArgSchema):
         default=None,
         missing=None,
         description=("debug feature for ignoring certain indices"
-                     " of the match collection"))
+                     " of the match collection"),
+        cli_as_single_argument=True
+    )
     compress_output = Boolean(
         required=False,
         missing=True,
