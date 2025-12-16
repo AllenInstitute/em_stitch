@@ -57,7 +57,9 @@ class MontageSolverSchema(ArgSchema):
     solver_templates = List(
         Str,
         required=True,
-        description="input json basenames for the solver args")
+        description="input json basenames for the solver args",
+        cli_as_single_argument=True
+    )
     solver_template_dir = InputDir(
         required=True,
         description="location of the templates for the solver")
