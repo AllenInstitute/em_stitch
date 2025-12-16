@@ -1,7 +1,18 @@
 [project]
 name = "em-stitch"
 requires-python = ">3.6,<3.12"
-dynamic = ["version"] 
+description = "Distortion correction and montage stitching for EM images"
+readme = "README.md"
+dynamic = ["version"]
+license = {file = "LICENSE"}
+authors = [
+  {name = "Daniel Kapner"},
+  {name = "Russel Torres"},
+  {name = "Jay Borseth"}
+]
+maintainers = [
+  {name = "Russel Torres"}
+]
 dependencies = [
     "marshmallow<3.0",
     "argschema<2.0",
@@ -29,13 +40,17 @@ test = [
     "shapely",
     "scikit-image",
 ]
+pypi-build = [
+  "build",
+  "twine"
+]
 
 [build-system]
 requires = ["setuptools>=64", "setuptools_scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-py-modules = [
+packages = [
     "em_stitch"
 ]
 
@@ -66,19 +81,30 @@ petsc4py = "*"
 python = "3.10.*"
 [tool.pixi.feature.py311.dependencies]
 python = "3.11.*"
+# [tool.pixi.feature.py312.dependencies]
+# python = "3.12.*"
+# [tool.pixi.feature.py313.dependencies]
+# python = "3.13.*"
 
 [tool.pixi.environments]
-py310 = ["py310"]
 py310-test = ["py310", "test"]
-py311 = ["py311"]
 py311-test = ["py311", "test"]
-py310-conda = ["py310", "pixi-base"]
+# py312-test = ["py312", "test"]
+# py313-test = ["py313", "test"]
+conda-env = ["pixi-base"]
 py310-conda-test = ["py310", "pixi-base", "test"]
-py311-conda = ["py311", "pixi-base"]
 py311-conda-test = ["py311", "pixi-base", "test"]
+# py312-conda-test = ["py312", "pixi-base", "test"]
+# py313-conda-test = ["py313", "pixi-base", "test"]
+build = ["pypi-build"]
 
 [tool.coverage.run]
 omit = ["integration_tests/*"]
 
 [tool.pixi.feature.test.tasks]
 test = "pytest  --cov --cov-report=xml --junitxml=test-reports/test.xml"
+
+[tool.pixi.feature.pypi-build.tasks]
+pypi-build = "python -m build"
+pypi-test-upload = "python -m twine upload --repository testpypi dist/*"
+pypi-test-deploy = "python -m build && python -m twine upload --repository testpypi dist/*"
