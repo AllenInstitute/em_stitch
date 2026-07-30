@@ -22,7 +22,8 @@ dependencies = [
     "triangle",
     "bigfeta>=1.0.3",
     "opencv-python",
-    "setuptools ; python_version >= '3.12'"
+    "setuptools ; python_version >= '3.12'",
+    "uri_handler",
 ]
 
 [project.optional-dependencies]
@@ -87,6 +88,10 @@ python = "3.12.*"
 [tool.pixi.feature.py313.dependencies]
 python = "3.13.*"
 
+[tool.pixi.feature.jupyter.dependencies]
+jupyter = "*"
+python-dotenv = "*"
+
 [tool.pixi.environments]
 py310-test = ["py310", "test"]
 py311-test = ["py311", "test"]
@@ -98,12 +103,16 @@ py311-conda-test = ["py311", "pixi-base", "test"]
 py312-conda-test = ["py312", "pixi-base", "test"]
 py313-conda-test = ["py313", "pixi-base", "test"]
 build = ["pypi-build"]
+conda-jupyter = ["pixi-base", "jupyter"]
 
 [tool.coverage.run]
 omit = ["integration_tests/*"]
 
 [tool.pixi.feature.test.tasks]
 test = "pytest  --cov --cov-report=xml --junitxml=test-reports/test.xml"
+
+[tool.pixi.feature.jupyter.tasks]
+notebook = "jupyter notebook"
 
 [tool.pixi.feature.pypi-build.tasks]
 pypi-build = "python -m build"
