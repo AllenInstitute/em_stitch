@@ -46,7 +46,7 @@ class GenerateEMTilespecsModuleTilEMTiltSeries(BaseGenerateEMTilespecsModule):
         minimum_intensity=0, maximum_intensity=255,
         maskUrl=None, width=None, height=None,
         rotation=None, resX=None, resY=None,
-        img_ext=".tiff"
+        img_ext=".tiff", y_pos=True, x_pos=False
     ):
         if maskUrl is not None:
             raise NotImplementedError("masking not available")
@@ -83,10 +83,16 @@ class GenerateEMTilespecsModuleTilEMTiltSeries(BaseGenerateEMTilespecsModule):
         for img_uri, img_coord, img_name, img_d in zip(img_uris, img_coords,
                                                        img_names,
                                                        md["tiles"].values()):
+            y_coord = (
+                maxY - img_coord[1] if y_pos else img_coord[1] - minY
+            )
+            x_coord = (
+                maxX - img_coord[0] if x_pos else img_coord[0] - minX
+            )
             raw_tforms = [
                 renderapi.transform.AffineModel(
-                    B0=img_coord[0] - minX,
-                    B1=maxY - img_coord[1]  # - 2 * minY   # flip y for this stage
+                    B0=x_coord,
+                    B1=y_coord  # - 2 * minY   # flip y for this stage
                 )
             ]
             ip = renderapi.image_pyramid.ImagePyramid()
@@ -132,7 +138,7 @@ class GenerateEMTilespecsModuleNewTilEMTiltSeries(BaseGenerateEMTilespecsModule)
         minimum_intensity=0, maximum_intensity=255,
         maskUrl=None, width=None, height=None,
         rotation=None, resX=None, resY=None,
-        img_ext=".tiff"
+        img_ext=".tiff", y_pos=True, x_pos=False
     ):
         if maskUrl is not None:
             raise NotImplementedError("masking not available")
@@ -192,10 +198,16 @@ class GenerateEMTilespecsModuleNewTilEMTiltSeries(BaseGenerateEMTilespecsModule)
                                                        img_names,
                                                        md["tiles"]):
                                                        # md["tiles"].values()):
+            y_coord = (
+                maxY - img_coord[1] if y_pos else img_coord[1] - minY
+            )
+            x_coord = (
+                maxX - img_coord[0] if x_pos else img_coord[0] - minX
+            )
             raw_tforms = [
                 renderapi.transform.AffineModel(
-                    B0=img_coord[0] - minX,
-                    B1=maxY - img_coord[1]  # - 2 * minY   # flip y for this stage
+                    B0=x_coord,
+                    B1=y_coord
                 )
             ]
             ip = renderapi.image_pyramid.ImagePyramid()
