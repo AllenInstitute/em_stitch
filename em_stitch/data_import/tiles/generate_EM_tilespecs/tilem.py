@@ -46,7 +46,7 @@ class GenerateEMTilespecsModuleTilEMTiltSeries(BaseGenerateEMTilespecsModule):
         minimum_intensity=0, maximum_intensity=255,
         maskUrl=None, width=None, height=None,
         rotation=None, resX=None, resY=None,
-        img_ext=".tiff", y_pos=True, x_pos=False
+        img_ext=".tiff", flip_y=True, flip_x=False
     ):
         if maskUrl is not None:
             raise NotImplementedError("masking not available")
@@ -84,10 +84,10 @@ class GenerateEMTilespecsModuleTilEMTiltSeries(BaseGenerateEMTilespecsModule):
                                                        img_names,
                                                        md["tiles"].values()):
             y_coord = (
-                maxY - img_coord[1] if y_pos else img_coord[1] - minY
+                maxY - img_coord[1] if flip_y else img_coord[1] - minY
             )
             x_coord = (
-                maxX - img_coord[0] if x_pos else img_coord[0] - minX
+                maxX - img_coord[0] if flip_x else img_coord[0] - minX
             )
             raw_tforms = [
                 renderapi.transform.AffineModel(
@@ -138,7 +138,7 @@ class GenerateEMTilespecsModuleNewTilEMTiltSeries(BaseGenerateEMTilespecsModule)
         minimum_intensity=0, maximum_intensity=255,
         maskUrl=None, width=None, height=None,
         rotation=None, resX=None, resY=None,
-        img_ext=".tiff", y_pos=True, x_pos=False
+        img_ext=".tiff", flip_y=True, flip_x=False
     ):
         if maskUrl is not None:
             raise NotImplementedError("masking not available")
@@ -199,10 +199,10 @@ class GenerateEMTilespecsModuleNewTilEMTiltSeries(BaseGenerateEMTilespecsModule)
                                                        md["tiles"]):
                                                        # md["tiles"].values()):
             y_coord = (
-                maxY - img_coord[1] if y_pos else img_coord[1] - minY
+                maxY - img_coord[1] if flip_y else img_coord[1] - minY
             )
             x_coord = (
-                maxX - img_coord[0] if x_pos else img_coord[0] - minX
+                maxX - img_coord[0] if flip_x else img_coord[0] - minX
             )
             raw_tforms = [
                 renderapi.transform.AffineModel(
