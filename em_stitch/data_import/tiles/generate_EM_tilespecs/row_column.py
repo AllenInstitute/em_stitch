@@ -59,7 +59,7 @@ class GenerateEMTilespecsModuleRowColumn(BaseGenerateEMTilespecsModule):
         maskUrl=None, width=None, height=None,
         rotation=None, resX=None, resY=None,
         overlap_row=0.1, overlap_col=0.1,
-        flip_y=False
+        flip_y=False, flip_x=False
     ):
         if maskUrl is not None:
             raise NotImplementedError("masking not available")
@@ -94,9 +94,10 @@ class GenerateEMTilespecsModuleRowColumn(BaseGenerateEMTilespecsModule):
         for img_uri, img_coord, img_name, (row, col) in zip(
                 img_uris, img_coords, img_names, rows_columns):
             new_y = ((maxY - img_coord[1]) if flip_y else img_coord[1] - minY)
+            new_x = ((maxX - img_coord[0]) if flip_x else img_coord[0] - minX)
             raw_tforms = [
                 renderapi.transform.AffineModel(
-                    B0=img_coord[0] - minX,
+                    B0=new_x,
                     B1=new_y
                 )
             ]
